@@ -1697,6 +1697,26 @@ module.exports = {
 				}
 			}
 		},
+		"/hosts/restart": {
+			"_apiInfo": {
+				"l": "Perform Maintenance Operation",
+				"group": "Hosts"
+			},
+			"env": {
+				"source": ['query.env'],
+				"required": true,
+				"validation": {
+					"type": "string"
+				}
+			},
+			"hostname": {
+				"source": ['query.hostname'],
+				"required": true,
+				"validation": {
+					"type": "string"
+				}
+			}
+		},
 		"/hosts/maintenanceOperation": {
 			"_apiInfo": {
 				"l": "Perform Maintenance Operation",
