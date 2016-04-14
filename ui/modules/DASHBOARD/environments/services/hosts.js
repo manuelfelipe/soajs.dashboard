@@ -678,6 +678,24 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
         });
     }
 
+    function restartHost(currentScope, env, serviceName, oneHost) {
+        getSendDataFromServer(currentScope, ngDataApi, {
+            method: 'get',
+            routeName: '/dashboard/hosts/restart',
+            params: {
+                env: env,
+                hostname: oneHost.hostname
+            }
+        }, function (error, response) {
+            if (error) {
+                currentScope.displayAlert('danger', error.message);
+            }
+            else {
+                currentScope.displayAlert('success', 'Host is restarting');
+            }
+        });
+    }
+
     function infoHost(currentScope, env, serviceName, oneHost, serviceInfo) {
 
     }
@@ -1134,7 +1152,7 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
             }
         });
     }
-    
+
     function removeZombieContainer(currentScope, container, env) {
         getSendDataFromServer(currentScope, ngDataApi, {
             method: 'get',
@@ -1197,6 +1215,7 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
         'loadProvisioning': loadProvisioning,
         'loadDaemonStats': loadDaemonStats,
         'removeHost': removeHost,
+        'restartHost': restartHost,
         'hostLogs': hostLogs,
         'infoHost': infoHost,
         'createHost': createHost,

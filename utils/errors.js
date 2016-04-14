@@ -113,6 +113,7 @@ var errors = {
 	"618": "The Deployer of this environment is configured to be manual. Deploy and Start the services then refresh this section.",
 	"619": "The Deployer of this environment is configured to be manual. Unable to perform requested maintenance operation.",
     "620": "Make sure upload directory exists :",
+	"621": "The Deployer of this environment is configured to be manual. Unable to restart host",
 
 	"700": "This Content Schema already Exist",
 	"701": "Invalid Id provided",
@@ -177,7 +178,7 @@ var errors = {
 	"761": "Failed to activate repository, make sure config.js file is available in your repository and/or it has the right schema.",
 	"762": "A module with the same name and/or port already exists",
 	"763": "Unable to reach the GitHub API. Please try again.",
-	
+
 	"764": "Static Content already exists",
 	"765": "Failed to deactivate repository",
 	"766": "Repository has running hosts. Please stop them to be able to deactivate repository",

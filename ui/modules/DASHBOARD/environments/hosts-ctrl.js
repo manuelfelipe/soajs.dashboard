@@ -79,6 +79,10 @@ environmentsApp.controller('hostsCtrl', ['$scope', '$cookieStore', '$timeout', '
 		envHosts.startHost($scope, env, serviceName, oneHost, serviceInfo);
 	};
 
+	$scope.restartHost = function (env, serviceName, oneHost, serviceInfo) {
+		envHosts.restartHost($scope, env, serviceName, oneHost, serviceInfo);
+	}
+
 	$scope.hostLogs = function (env, serviceName, oneHost, serviceInfo) {
 		envHosts.hostLogs($scope, env, serviceName, oneHost, serviceInfo);
 	};
@@ -110,4 +114,3 @@ environmentsApp.controller('hostsCtrl', ['$scope', '$cookieStore', '$timeout', '
 		$scope.listZombieContainers($scope.envCode);
 	}
 }]);
-

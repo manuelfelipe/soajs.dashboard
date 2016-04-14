@@ -114,6 +114,10 @@ var deployer = {
 		lib.container(deployerConfig, "start", cid, mongo, null, cb);
 	},
 
+	"stop": function (deployerConfig, cid, mongo, cb) {
+		lib.container(deployerConfig, "stop", cid, mongo, null, cb);
+	},
+
 	"remove": function (deployerConfig, cid, mongo, cb) {
 		lib.container(deployerConfig, "remove", cid, mongo, {"force": true}, cb);
 	},
