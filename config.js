@@ -1697,9 +1697,49 @@ module.exports = {
 				}
 			}
 		},
+		"/hosts/start": {
+			"_apiInfo": {
+				"l": "Start Host",
+				"group": "Hosts"
+			},
+			"env": {
+				"source": ['query.env'],
+				"required": true,
+				"validation": {
+					"type": "string"
+				}
+			},
+			"hostname": {
+				"source": ['query.hostname'],
+				"required": true,
+				"validation": {
+					"type": "string"
+				}
+			}
+		},
+		"/hosts/stop": {
+			"_apiInfo": {
+				"l": "Stop Running Host",
+				"group": "Hosts"
+			},
+			"env": {
+				"source": ['query.env'],
+				"required": true,
+				"validation": {
+					"type": "string"
+				}
+			},
+			"hostname": {
+				"source": ['query.hostname'],
+				"required": true,
+				"validation": {
+					"type": "string"
+				}
+			}
+		},
 		"/hosts/restart": {
 			"_apiInfo": {
-				"l": "Perform Maintenance Operation",
+				"l": "Restart Running Host",
 				"group": "Hosts"
 			},
 			"env": {

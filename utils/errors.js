@@ -113,7 +113,7 @@ var errors = {
 	"618": "The Deployer of this environment is configured to be manual. Deploy and Start the services then refresh this section.",
 	"619": "The Deployer of this environment is configured to be manual. Unable to perform requested maintenance operation.",
     "620": "Make sure upload directory exists :",
-	"621": "The Deployer of this environment is configured to be manual. Unable to restart host",
+	"621": "The Deployer of this environment is configured to be manual. Starting, stopping, or restarting hosts should be done manually.",
 
 	"700": "This Content Schema already Exist",
 	"701": "Invalid Id provided",

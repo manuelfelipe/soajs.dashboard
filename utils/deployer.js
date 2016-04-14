@@ -95,6 +95,11 @@ var deployer = {
         deployer.remove(deployerConfig, cid, mongo, cb);
     },
 
+    "restart": function (depoyerConfig, cid, mongo, cb) {
+        var deployer = getDeployer(deployerConfig);
+        deployer.restart(deployerConfig, cid, mongo, cb);
+    },
+
     "info": function (deployerConfig, cid, req, res, mongo) {
         var deployer = getDeployer(deployerConfig);
         deployer.info(deployerConfig, cid, req, res, mongo);

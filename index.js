@@ -329,6 +329,14 @@ service.init(function() {
 		checkForMongo(req);
 		host.delete(config, mongo, req, res);
 	});
+	service.get("/hosts/start", function (req, res) {
+		checkForMongo(req);
+		host.start(config, mongo, req, res);
+	});
+	service.get("/hosts/stop", function (req, res) {
+		checkForMongo(req);
+		host.stop(config, mongo, req, res);
+	});
 	service.get("/hosts/restart", function (req, res) {
 		checkForMongo(req);
 		host.restart(config, mongo, req, res);

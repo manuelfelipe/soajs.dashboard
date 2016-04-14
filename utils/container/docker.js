@@ -122,6 +122,10 @@ var deployer = {
 		lib.container(deployerConfig, "remove", cid, mongo, {"force": true}, cb);
 	},
 
+	"restart": function (deployerConfig, cid, mongo, cb) {
+		lib.container(deployerConfig, "restart", cid, mongo, cb);
+	},
+
 	"info": function (deployerConfig, cid, req, res, mongo) {
 		lib.getDeployer(deployerConfig, mongo, function (error, deployer) {
 			deployer.getContainer(cid).logs({

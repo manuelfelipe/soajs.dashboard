@@ -696,6 +696,24 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
         });
     }
 
+    function stopHost(currentScope, env, serviceName, oneHost) {
+        getSendDataFromServer(currentScope, ngDataApi, {
+            method: 'get',
+            routeName: '/dashboard/hosts/stop',
+            params: {
+                env: env,
+                hostname: oneHost.hostname
+            }
+        }, function (error, response) {
+            if (error) {
+                currentScope.displayAlert('danger', error.message);
+            }
+            else {
+                currentScope.displayAlert('success', 'Host has been stopped');
+            }
+        });
+    }
+
     function infoHost(currentScope, env, serviceName, oneHost, serviceInfo) {
 
     }
