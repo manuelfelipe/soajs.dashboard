@@ -186,7 +186,6 @@ var deployer = {
 					"noOverwriteDirNonDir": false //override existing files
 				};
 
-				console.log(opts);
 				container.putArchive(tarFile, opts, function(error, data){
 					console.log(error);
 					console.log(data);
