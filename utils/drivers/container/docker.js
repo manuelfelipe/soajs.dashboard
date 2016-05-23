@@ -167,31 +167,58 @@ var deployer = {
 			checkError(error, cb, function(){
 				var container = deployer.getContainer(cid);
 
-				var d = dest.split("/");
-				var filename = d.pop();
-				d = d.join("/") + "/";
-
-				var file = fs.createReadStream(src, "utf8");
-				var packer = tar.Pack({}).on('error', function (error) {
-					console.log (error);
-				}).on('end', function () {
-					console.log ('done');
-				});
-				var tarWriteStream = fs.createWriteStream(src + '.tar');
-				file.pipe(packer).pipe(tarWriteStream);
-				var tarFile = fs.createReadStream(src + '.tar');
+				var tarFile = fs.createReadStream(src);
 
 				var opts = {
-					"path": d,
+					"path": dest,
 					"noOverwriteDirNonDir": false //override existing files
 				};
 
 				container.putArchive(tarFile, opts, function(error, data){
-					console.log(error);
-					console.log(data);
-					console.log("-----------");
-					return cb(error, true);
+					if (error) {
+						return cb(error);
+					}
+					else {
+						return cb();
+					}
 				});
+
+				// var d = dest.split("/");
+				// var filename = d.pop();
+				// d = d.join("/") + "/";
+				// var pipe = null;
+				//
+				// var file = fs.createReadStream(src, "utf8");
+				// var packer = tar.Pack({}).on('error', function (error) {
+				// 	console.log (error);
+				// 	return cb(error);
+				// }).on('end', function () {
+				// 	console.log ('done');
+				//
+				// 	var folderPath = d + filename.split(".").pop();
+				// 	fs.mkdir(folderPath, function (error) {
+				// 		if (error) {
+				// 			return cb(error);
+				// 		}
+				// 		else {
+				// 			var tarWriteStream = fs.createWriteStream(src + '.tar');
+				// 			pipe = temp.pipe(tarWriteStream);
+				// 			var tarFile = fs.createReadStream(src + '.tar');
+				//
+				// 			var opts = {
+				// 				"path": d,
+				// 				"noOverwriteDirNonDir": false //override existing files
+				// 			};
+				//
+				// 			container.putArchive(tarFile, opts, function(error, data){
+				// 				console.log(error);
+				// 				console.log("-----------");
+				// 				return cb(error, true);
+				// 			});
+				// 		}
+				// 	});
+				// });
+				// pipe = file.pipe(packer);
 			});
 		});
 	}
