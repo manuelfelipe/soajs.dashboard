@@ -142,6 +142,7 @@ describe("testing hosts deployment", function () {
                                 qs: {
                                     filename: 'test_cert.pem',
                                     envCode: 'DEV',
+                                    type: 'docker',
                                     driver: 'dockermachine - local'
                                 },
                                 formData: {
@@ -611,27 +612,6 @@ describe("testing hosts deployment", function () {
 
     describe("testing daemon deployment", function () {
         var gcRecord;
-        before("add a gc daemon", function (done) {
-            mongo.findOne('gc', {}, function (error, gcr) {
-                assert.ifError(error);
-                assert.ok(gcr);
-
-                gcRecord = gcr;
-                var daemonGcRecord = {
-                    name: gcRecord.name,
-                    gcId: gcRecord._id.toString(),
-                    gcV: gcRecord.v,
-                    port: 1111,
-                    jobs: {}
-                };
-                mongo.insert("daemons", daemonGcRecord, function (error, result) {
-                    assert.ifError(error);
-                    assert.ok(result);
-                    done();
-                });
-            });
-        });
-
         it("success - deploy 1 daemon", function (done) {
             var params = {
                 headers: {
@@ -725,32 +705,6 @@ describe("testing hosts deployment", function () {
                         done();
                     });
                 });
-            });
-        });
-
-        it("success - deploy 1 gc daemon", function (done) {
-            var params = {
-                headers: {
-                    soajsauth: soajsauth
-                },
-                "form": {
-                    "gcName": gcRecord.name,
-                    "gcVersion": gcRecord.v,
-                    "grpConfName": "group1",
-                    "envCode": "DEV",
-                    "owner": "soajs",
-                    "repo": "soajs.dashboard", //dummy value, does not need to be accurate
-                    "branch": "develop",
-                    "commit": "b59545bb699205306fbc3f83464a1c38d8373470",
-                    "variables": [
-                        "TEST_VAR=mocha"
-                    ]
-                }
-            };
-            executeMyRequest(params, "hosts/deployDaemon", "post", function (body) {
-                assert.ok(body.result);
-                assert.ok(body.data);
-                done();
             });
         });
 
@@ -1028,140 +982,169 @@ describe("testing hosts deployment", function () {
         });
     });
 
-    describe("testing nginx containers", function () {
-        var nginxDockerRecord = {
-            "env": "dev",
-            "cid": "da42c756def695471acb1e1391746f1b9d82e5f925e41b3d02b0759b1a257b87",
-            "hostname": "nginx_dev",
-            "type": "nginx",
-            "running": true,
-            "deployer": {
-                "host": "192.168.99.103",
-                "port": 2376,
-                "config": {
-                    "HostConfig": {
-                        "NetworkMode": "soajsnet"
-                    },
-                    "MachineName": "soajs-dev"
-                },
-                "driver": {
-                    "type": "container",
-                    "driver": "docker"
-                },
-                "selectedDriver": "dockermachine - local",
-                "envCode": "dev"
-            },
-            "info": {}
-        };
+    // describe("testing nginx containers", function () {
+    //     var nginxDockerRecord = {
+    //         "env": "dev",
+    //         "cid": "da42c756def695471acb1e1391746f1b9d82e5f925e41b3d02b0759b1a257b87",
+    //         "hostname": "nginx_dev",
+    //         "type": "nginx",
+    //         "running": true,
+    //         "deployer": {
+    //             "host": "192.168.99.103",
+    //             "port": 2376,
+    //             "config": {
+    //                 "HostConfig": {
+    //                     "NetworkMode": "soajsnet"
+    //                 },
+    //                 "MachineName": "soajs-dev"
+    //             },
+    //             "driver": {
+    //                 "type": "container",
+    //                 "driver": "docker"
+    //             },
+    //             "selectedDriver": "dockermachine - local",
+    //             "envCode": "dev"
+    //         },
+    //         "info": {}
+    //     };
+    //
+    //     before("clean docker collection and inject nginx records in docker collection", function (done) {
+    //         mongo.remove("docker", {type: 'nginx'}, function (error) {
+    //             assert.ifError(error);
+    //
+    //             mongo.insert("docker", nginxDockerRecord, function (error) {
+    //                 assert.ifError(error);
+    //                 done();
+    //             });
+    //         });
+    //     });
+    //
+    //     describe("list nginx hosts", function () {
+    //
+    //         it("success - will list nginx hosts", function (done) {
+    //             var params = {
+    //                 qs: {
+    //                     env: nginxDockerRecord.env
+    //                 }
+    //             };
+    //             executeMyRequest(params, 'hosts/nginx/list', 'get', function (body) {
+    //                 assert.ok(body.result);
+    //                 assert.ok(body.data);
+    //                 assert.equal(body.data.length, 1);
+    //                 done();
+    //             });
+    //         });
+    //
+    //         it("fail - missing required params", function (done) {
+    //             executeMyRequest({}, 'hosts/nginx/list', 'get', function (body) {
+    //                 assert.ok(body.errors);
+    //                 assert.deepEqual(body.errors.details[0], {'code': 172, 'message': 'Missing required field: env'});
+    //                 done();
+    //             });
+    //         });
+    //
+    //         it("mongo check", function (done) {
+    //             mongo.count("docker", {type: 'nginx'}, function (error, count) {
+    //                 assert.ifError(error);
+    //                 assert.equal(count, 1);
+    //                 done();
+    //             });
+    //         });
+    //     });
+    //
+    //     describe("delete nginx hosts", function () {
+    //         var nginxDockerRecordTwo = {
+    //             "env": "dev",
+    //             "cid": "da42c756def695471acb1e1391746f1b9d82e5f925e41b3d02b0759b1a257b99",
+    //             "hostname": "nginx_345_dev",
+    //             "type": "nginx",
+    //             "running": true,
+    //             "deployer": {
+    //                 "host": "192.168.99.103",
+    //                 "port": 2376,
+    //                 "config": {
+    //                     "HostConfig": {
+    //                         "NetworkMode": "soajsnet"
+    //                     },
+    //                     "MachineName": "soajs-dev"
+    //                 },
+    //                 "driver": {
+    //                     "type": "container",
+    //                     "driver": "docker"
+    //                 },
+    //                 "selectedDriver": "dockermachine - local",
+    //                 "envCode": "dev"
+    //             },
+    //             "info": {}
+    //         };
+    //
+    //         it("fail - only one nginx container is available", function (done) {
+    //             var params = {
+    //                 qs: {
+    //                     env: nginxDockerRecord.env,
+    //                     cid: nginxDockerRecord.cid
+    //                 }
+    //             };
+    //             executeMyRequest(params, 'hosts/container/delete', 'get', function (body) {
+    //                 assert.ok(body.errors);
+    //                 assert.deepEqual(body.errors.details[0], {'code': 777, 'message': errorCodes[777]});
+    //                 done();
+    //             });
+    //         });
+    //
+    //         it("success - will delete nginx container", function (done) {
+    //             //inject another nginx record in docker collection
+    //             mongo.insert("docker", nginxDockerRecordTwo, function (error) {
+    //                 assert.ifError(error);
+    //
+    //                 var params = {
+    //                     qs: {
+    //                         env: nginxDockerRecordTwo.env,
+    //                         cid: nginxDockerRecordTwo.cid
+    //                     }
+    //                 };
+    //                 executeMyRequest(params, 'hosts/container/delete', 'get', function (body) {
+    //                     assert.ok(body.result);
+    //                     assert.ok(body.data);
+    //                     done();
+    //                 });
+    //             });
+    //         });
+    //
+    //         it("mongo check", function (done) {
+    //             mongo.count("docker", {type: 'nginx'}, function (error, count) {
+    //                 assert.ifError(error);
+    //                 assert.equal(count, 1);
+    //                 done();
+    //             });
+    //         });
+    //     });
+    // });
 
-        before("clean docker collection and inject nginx records in docker collection", function (done) {
-            mongo.remove("docker", {type: 'nginx'}, function (error) {
+    describe("testing redeployment", function () {
+        it("success - will redeploy service", function (done) {
+            mongo.remove("hosts", {hostname: /controller_[0-9a-z]*_dev/}, function (error) {
                 assert.ifError(error);
 
-                mongo.insert("docker", nginxDockerRecord, function (error) {
+                mongo.findOne("hosts", {env: 'dev', hostname: /helloDaemon_[0-9a-z]*_dev/}, function (error, hostRecord) {
                     assert.ifError(error);
-                    done();
-                });
-            });
-        });
-
-        describe("list nginx hosts", function () {
-
-            it("success - will list nginx hosts", function (done) {
-                var params = {
-                    qs: {
-                        env: nginxDockerRecord.env
-                    }
-                };
-                executeMyRequest(params, 'hosts/nginx/list', 'get', function (body) {
-                    assert.ok(body.result);
-                    assert.ok(body.data);
-                    assert.equal(body.data.length, 1);
-                    done();
-                });
-            });
-
-            it("fail - missing required params", function (done) {
-                executeMyRequest({}, 'hosts/nginx/list', 'get', function (body) {
-                    assert.ok(body.errors);
-                    assert.deepEqual(body.errors.details[0], {'code': 172, 'message': 'Missing required field: env'});
-                    done();
-                });
-            });
-
-            it("mongo check", function (done) {
-                mongo.count("docker", {type: 'nginx'}, function (error, count) {
-                    assert.ifError(error);
-                    assert.equal(count, 1);
-                    done();
-                });
-            });
-        });
-
-        describe("delete nginx hosts", function () {
-            var nginxDockerRecordTwo = {
-                "env": "dev",
-                "cid": "da42c756def695471acb1e1391746f1b9d82e5f925e41b3d02b0759b1a257b99",
-                "hostname": "nginx_345_dev",
-                "type": "nginx",
-                "running": true,
-                "deployer": {
-                    "host": "192.168.99.103",
-                    "port": 2376,
-                    "config": {
-                        "HostConfig": {
-                            "NetworkMode": "soajsnet"
-                        },
-                        "MachineName": "soajs-dev"
-                    },
-                    "driver": {
-                        "type": "container",
-                        "driver": "docker"
-                    },
-                    "selectedDriver": "dockermachine - local",
-                    "envCode": "dev"
-                },
-                "info": {}
-            };
-
-            it("fail - only one nginx container is available", function (done) {
-                var params = {
-                    qs: {
-                        env: nginxDockerRecord.env,
-                        cid: nginxDockerRecord.cid
-                    }
-                };
-                executeMyRequest(params, 'hosts/container/delete', 'get', function (body) {
-                    assert.ok(body.errors);
-                    assert.deepEqual(body.errors.details[0], {'code': '777', 'message': errorCodes[777]});
-                    done();
-                });
-            });
-
-            it("success - will delete nginx container", function (done) {
-                //inject another nginx record in docker collection
-                mongo.insert("docker", nginxDockerRecordTwo, function (error) {
-                    assert.ifError(error);
+                    assert.ok(hostRecord);
 
                     var params = {
-                        qs: {
-                            env: nginxDockerRecordTwo.env,
-                            cid: nginxDockerRecordTwo.cid
+                        form: {
+                            envCode: 'DEV',
+                            name: hostRecord.name,
+                            hostname: hostRecord.hostname,
+                            ip: hostRecord.ip,
+                            branch: hostRecord.src.branch
                         }
                     };
-                    executeMyRequest(params, 'hosts/container/delete', 'get', function (body) {
+                    executeMyRequest(params, 'hosts/redeployService', 'post', function (body) {
                         assert.ok(body.result);
                         assert.ok(body.data);
+
                         done();
                     });
-                });
-            });
-
-            it("mongo check", function (done) {
-                mongo.count("docker", {type: 'nginx'}, function (error, count) {
-                    assert.ifError(error);
-                    assert.equal(count, 1);
-                    done();
                 });
             });
         });

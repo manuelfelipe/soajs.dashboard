@@ -1,7 +1,7 @@
 {
   "name": "soajs.dashboard",
   "description": "soajs dashboard service",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "author": {
     "name": "soajs team",
     "email": "team@soajs.org"
@@ -18,7 +18,7 @@
     "test": "grunt test"
   },
   "devDependencies": {
-    "soajs.mongodb.data": "0.1.*",
+    "soajs.mongodb.data": "0.2.*",
     "soajs.controller": "0.2.*",
     "soajs.urac": "0.2.*",
     "grunt": "0.4.5",
@@ -33,7 +33,7 @@
     "lodash": "*",
     "mocha": "*",
     "shelljs": "*",
-    "docker-mock": "*"
+    "docker-mock": "aff04/docker-mock.git"
   },
   "dependencies": {
     "async": "*",

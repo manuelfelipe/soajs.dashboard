@@ -13,6 +13,7 @@ membersApp.controller('membersCtrl', ['$scope', 'membersHelper', function ($scop
 	$scope.key = apiConfiguration.key;
 	$scope.members = angular.extend($scope);
 	$scope.members.access = $scope.$parent.access;
+
 	$scope.$parent.$on('reloadMembers', function (event) {
 		$scope.members.listMembers($scope);
 	});
@@ -42,9 +43,11 @@ membersApp.controller('membersCtrl', ['$scope', 'membersHelper', function ($scop
 	};
 
 	//call default method
-	if ($scope.members.access.adminUser.list) {
-		$scope.members.listMembers($scope);
-	}
+	setTimeout(function () {
+		if ($scope.members.access.adminUser.list) {
+			$scope.members.listMembers($scope);
+		}
+	}, 200);
 
 }]);
 
@@ -52,6 +55,7 @@ membersApp.controller('groupsCtrl', ['$scope', 'groupsHelper', function ($scope,
 	$scope.key = apiConfiguration.key;
 	$scope.groups = angular.extend($scope);
 	$scope.groups.access = $scope.$parent.access;
+
 	$scope.groups.listGroups = function () {
 		groupsHelper.listGroups($scope.groups, groupsConfig);
 	};
@@ -76,7 +80,12 @@ membersApp.controller('groupsCtrl', ['$scope', 'groupsHelper', function ($scope,
 		groupsHelper.assignUsers($scope.groups, groupsConfig, data, {'name': 'reloadMembers', params: {}}, true);
 	};
 
-	$scope.groups.listGroups();
+	setTimeout(function () {
+		if ($scope.groups.access.adminGroup.list) {
+			$scope.groups.listGroups();
+		}
+	}, 200);
+
 }]);
 
 membersApp.controller('tenantsCtrl', ['$scope', '$timeout', '$routeParams', 'ngDataApi', function ($scope, $timeout, $routeParams, ngDataApi) {
@@ -339,7 +348,6 @@ membersApp.controller('memberAclCtrl', ['$scope', '$routeParams', 'ngDataApi', '
 							overlayLoading.hide();
 						});
 						delete $scope.tenantApp.services;
-
 					}
 				});
 			});
@@ -380,28 +388,37 @@ membersApp.controller('memberAclCtrl', ['$scope', '$routeParams', 'ngDataApi', '
 		$scope.clearUserAcl = function () {
 			var postData = $scope.user;
 
-			if (typeof(postData.config) !== 'object') {
+			if (typeof(postData.config) === 'object') {
+				if (typeof(postData.config.packages) === 'object') {
+					$scope.tenantApp.applications.forEach(function (oneApplication) {
+						if (postData.config.packages[oneApplication.package]) {
+							if (postData.config.packages[oneApplication.package].acl) {
+								delete postData.config.packages[oneApplication.package].acl;
+							}
+						}
+					});
+				}
+				else {
+					postData.config.packages = {};
+				}
+			}
+			else {
 				postData.config = {};
 			}
 
-			if (typeof(postData.config.packages) !== 'object') {
-				postData.config.packages = {};
-			}
-
-			$scope.tenantApp.applications.forEach(function (oneApplication) {
-				if (postData.config.packages[oneApplication.package]) {
-					if (postData.config.packages[oneApplication.package].acl) {
-						delete postData.config.packages[oneApplication.package].acl;
-					}
-				}
-			});
 			overlayLoading.show();
-			getSendDataFromServer($scope, ngDataApi, {
+			var opts = {
 				"method": "send",
-				"routeName": "/urac/admin/editUser",
+				"routeName": "/urac/admin/editUserConfig",
 				"params": {"uId": $scope.user['_id']},
 				"data": postData
-			}, function (error) {
+			};
+			if ($scope.key) {
+				opts.headers = {
+					"key": $scope.key
+				};
+			}
+			getSendDataFromServer($scope, ngDataApi, opts, function (error) {
 				overlayLoading.hide();
 				if (error) {
 					$scope.$parent.displayAlert('danger', error.code, true, 'urac', error.message);
@@ -417,11 +434,15 @@ membersApp.controller('memberAclCtrl', ['$scope', '$routeParams', 'ngDataApi', '
 
 		$scope.saveUserAcl = function () {
 			var postData = $scope.user;
-			if (typeof(postData.config) !== 'object') {
-				postData.config = {};
+			if (typeof(postData.config) === 'object') {
+				if (typeof(postData.config.packages) !== 'object') {
+					postData.config.packages = {};
+				}
 			}
-			if (typeof(postData.config.packages) !== 'object') {
-				postData.config.packages = {};
+			else {
+				postData.config = {
+					packages: {}
+				};
 			}
 
 			var counter = 0;
@@ -446,15 +467,18 @@ membersApp.controller('memberAclCtrl', ['$scope', '$routeParams', 'ngDataApi', '
 
 			if (counter === $scope.tenantApp.applications.length) {
 				overlayLoading.show();
-				getSendDataFromServer($scope, ngDataApi, {
+				var opts = {
 					"method": "send",
-					"headers": {
-						"key": $scope.key
-					},
-					"routeName": "/urac/admin/editUser", //editUserConfig
+					"routeName": "/urac/admin/editUserConfig",
 					"params": {"uId": $scope.user['_id']},
 					"data": postData
-				}, function (error) {
+				};
+				if ($scope.key) {
+					opts.headers = {
+						"key": $scope.key
+					};
+				}
+				getSendDataFromServer($scope, ngDataApi, opts, function (error) {
 					overlayLoading.hide();
 					if (error) {
 						$scope.$parent.displayAlert('danger', error.code, true, 'urac', error.message);
