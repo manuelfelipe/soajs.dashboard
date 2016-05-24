@@ -31,15 +31,7 @@ var modules = {
 	},
 	"deploy":{
 		"DASHBOARD": {
-			environments: 'modules/DASHBOARD/environments/install.js',
-			shoppingCart: {
-				'1': 'modules/DEV/shoppingCart/1/install.js'
-			},
-			order: 'modules/DEV/order/install.js',
-			catalogProfiles: 'modules/DEV/catalogProfiles/install.js',
-			knowledgebase: 'modules/DEV/knowledgebase/install.js',
-			merchantsProducts: 'modules/DEV/merchantsProducts/install.js',
-			drivers: 'modules/DEV/drivers/install.js'
+			environments: 'modules/DASHBOARD/environments/install.js'
 		}
 	},
 	"operate": {
