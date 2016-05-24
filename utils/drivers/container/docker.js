@@ -1,6 +1,5 @@
 "use strict";
 var fs = require("fs");
-var tar = require("tar");
 var Docker = require('dockerode');
 var utils = require("soajs/lib/utils");
 var Grid = require('gridfs-stream');
@@ -90,6 +89,12 @@ var lib = {
 					checkError(error, cb, function () {
 						if (action === 'start' || action === 'restart') {
 							container.inspect(cb);
+						}
+						else if (action === 'exec') {
+							//response in this case is an exec object
+							response.start({}, function (error, response) {
+								return cb(null, response);
+							});
 						}
 						else return cb(null, response);
 					});
