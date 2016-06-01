@@ -90,12 +90,6 @@ var lib = {
 						if (action === 'start' || action === 'restart') {
 							container.inspect(cb);
 						}
-						else if (action === 'exec') {
-							//response in this case is an exec object
-							response.start({}, function (error, response) {
-								return cb(null, response);
-							});
-						}
 						else return cb(null, response);
 					});
 				});
