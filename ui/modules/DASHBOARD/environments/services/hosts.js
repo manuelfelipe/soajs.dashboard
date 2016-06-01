@@ -1191,7 +1191,7 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                     if (currentScope.exposedPort) {
                         params.exposedPort = currentScope.exposedPort;
                     }
-    
+
                     getSendDataFromServer(currentScope, ngDataApi, {
                         method: 'send',
                         routeName: '/dashboard/hosts/deployNginx',
@@ -1227,6 +1227,10 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                         type: 'service'
                     });
                 }
+            }
+        });
+    }
+
 
     function restartNginx (currentScope, env, nginxHost) {
         overlayLoading.show();
