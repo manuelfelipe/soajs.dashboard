@@ -31,6 +31,20 @@
                     <label>{{translation.socketPath[LANG]}}</label><br>
                     <input type="text" class="form-control" ng-required="true" ng-model="socket.socketPath"><br>
                 </div>
+                <div ng-if="driver.info.label === 'scheduler - kubernetes'">
+                    <label>API Endpoint</label><br>
+                    <input type="text" class="form-control" ng-required="true" ng-model="scheduler.endpoint"><br>
+                    <label>namespace</label><br>
+                    <input type="text" class="form-control" ng-required="true" ng-model="scheduler.namespace"><br>
+                    <label>Username</label><br>
+                    <input type="text" class="form-control" ng-required="false" ng-model="scheduler.username"><br>
+                    <label>Password</label><br>
+                    <input type="text" class="form-control" ng-required="false" ng-model="scheduler.password"><br>
+                    <label>Token</label><br>
+                    <input type="text" class="form-control" ng-required="false" ng-model="scheduler.token"><br>
+                    <label>{{translation.additionalConfiguration[LANG]}}</label><br>
+                    <textarea class="form-control" ng-required="false" ng-model="scheduler.config" rows="6"></textarea><br>
+                </div>
                 <div class="pull-right">
                     <input type="submit" class="btn btn-primary" value="{{translation.submit[LANG]}}"/>
                     <input type="button" class="btn btn-danger" value="{{translation.cancel[LANG]}}" ng-click="closeModal()"/>

@@ -5,18 +5,22 @@
         </select>&nbsp;
         <a href="" class="btn btn-primary" ng-click="changeDeployerType()" ng-if="access.platforms.deployer.changeDeployerType && deployer.type !== originalDeployerType">{{translation.change[LANG]}}</a>
         <br><br><br>
-        <div ng-if="access.platforms.drivers.add && (allowAddDriver['local'] || allowAddDriver['cloud'] || allowAddDriver['socket'])">
+        <div ng-if="access.platforms.drivers.add && (allowAddDriver['local'] || allowAddDriver['cloud'] || allowAddDriver['socket'] || allowAddDriver['scheduler'])">
             <a href="" class="btn btn-primary" ng-click="addDriver()">{{translation.addDriver[LANG]}}</a>
             <br><br>
         </div>
         <div class="entryBoxes">
             <fieldset>
                 <legend>
-                    <img ng-src="{{dockerImagePath}}" height="32px" width="140px" alt="Docker Logo"/>
+                    <img ng-src="{{dockerImagePath}}" height="32px" width="140px" alt="Docker Logo"/> &nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;
+                    <img ng-src="{{kubernetesImagePath}}" height="32px" width="140px" alt="Kubernetes Logo"/>
                 </legend>
                 <div ng-repeat="driver in platforms" class="entryBox mb20" ng-if="access.platforms.list">
                     <div class="header">
-                        {{driver.label}}&nbsp;&nbsp;&nbsp;<span ng-if="driver.uiType !== 'socket'"><b>[ {{translation.host[LANG]}}: {{driver.host}} | {{translation.port[LANG]}}: {{driver.port}} ]</b></span>
+                        {{driver.label}}&nbsp;&nbsp;&nbsp;
+                        <span ng-if="driver.uiType !== 'socket' && driver.uiType !== 'scheduler'"><b>[ {{translation.host[LANG]}}: {{driver.host}} | {{translation.port[LANG]}}: {{driver.port}} ]</b></span>
+                        <span ng-if="driver.uiType === 'scheduler'"><b>[ API endpoint: {{driver.endpoint}} | Namespace: {{driver.namespace}} ]</b></span>
+
                         <span ng-if="uiSelected === driver.label" class="text-green">{{translation.selected[LANG]}}</span>
                         <span class="rightActions">
                             <a ng-if="access.platforms.drivers.delete" href="" ng-confirm-click="{{translation.areYouSureYouWantClearThisDriversConfiguration[LANG]}}" ng-click="clearDriverConfig(driver.label);">
@@ -25,7 +29,7 @@
                             <a ng-if="access.platforms.drivers.edit" href="" ng-click="editDriver(driver);">
                                 <span class="icon icon-pencil" tooltip="{{translation.editDriver[LANG]}}"></span>
                             </a>
-                            <a href="" ng-if="access.platforms.certs.upload && driver.uiType !== 'socket'" ng-click="uploadCerts('docker', driver.label)">
+                            <a href="" ng-if="access.platforms.certs.upload && driver.uiType !== 'socket' && driver.uiType !== 'scheduler'" ng-click="uploadCerts('docker', driver.label)">
                                 <span class="icon icon-attachment" tooltip="{{translation.uploadCertificates[LANG]}}"></span>
                             </a>
                             <a href="" ng-if="access.platforms.drivers.changeSelected && allowSelect" ng-click="selectDriver(driver.label)">
@@ -33,7 +37,7 @@
                             </a>
                         </span>
                     </div>
-                    <div class="body" ng-if="driver.uiType !== 'socket'">
+                    <div class="body" ng-if="driver.uiType !== 'socket' && driver.uiType !== 'scheduler'">
                         <label>{{translation.certificates[LANG]}}:&nbsp;</label><br>
                         <div class="entryBoxes entryBoxesGrid">
                             <div class="entryBox blueBox greyBoxCustom" ng-repeat="cert in driver.certificates">
@@ -43,7 +47,7 @@
                                 </a>
                             </div>
                         </div>
-                        <alert type="warning" ng-if="!driver.certificates || driver.certificates.length === 0">{{translation.noCertificatesUploadedYet[LANG]}}</alert>
+                        <alert type="warning" ng-if="(!driver.certificates || driver.certificates.length === 0) && driver.uiType !== 'scheduler'">{{translation.noCertificatesUploadedYet[LANG]}}</alert>
                     </div>
                     <div class="body" ng-if="driver.uiType === 'socket'">
                         <label>{{translation.socketPath[LANG]}}:&nbsp;</label>{{driver.socketPath}}<br>

@@ -10,6 +10,7 @@ environmentsApp.controller('platformsCtrl', ['$scope', '$cookies', 'envPlatforms
 
     $scope.dockerImagePath = "./themes/" + themeToUse + "/img/docker_logo.png";
     $scope.nginxImagePath = "./themes/" + themeToUse + "/img/nginx_logo.png";
+    $scope.kubernetesImagePath = "./themes/" + themeToUse + "/img/kubernetes_logo.svg";
 
     $scope.deployer = {
         type: "",

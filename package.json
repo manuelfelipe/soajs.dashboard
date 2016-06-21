@@ -49,6 +49,7 @@
     "rimraf": "*",
     "soajs": "0.3.*",
     "shortid": "^2.2.4",
-    "unzip2": "*"
+    "unzip2": "*",
+    "node-kubernetes-client": "*"
   }
 }

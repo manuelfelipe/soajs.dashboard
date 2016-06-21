@@ -94,6 +94,27 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 					});
 				}
 			}
+			if (record.container.scheduler) {
+
+				//TODO: add support for generic schedulers, not just k8s
+				if (Object.keys(record.container.scheduler.kubernetes).length === 0) {
+					currentScope.allowAddDriver['scheduler'] = {
+						'label': 'scheduler - kubernetes',
+						'allow': true
+					};
+				} else {
+					currentScope.platforms.push({
+						label: 'scheduler - kubernetes',
+						uiType: 'scheduler',
+						endpoint: record.container.scheduler.kubernetes.endpoint,
+						username: record.container.scheduler.kubernetes.username,
+						password: record.container.scheduler.kubernetes.password,
+						token: record.container.scheduler.kubernetes.token,
+						namespace: record.container.scheduler.kubernetes.namespace,
+						config: record.container.scheduler.kubernetes.config
+					});
+				}
+			}
 		}
 
 		//filling in certificates
@@ -447,6 +468,7 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 				$scope.local = {};
 				$scope.cloud = {};
 				$scope.socket = {};
+				$scope.scheduler = {};
 
 				$scope.onSubmit = function () {
 					var postData = preparePostData($scope);
@@ -498,6 +520,7 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 				$scope.local = {};
 				$scope.cloud = {};
 				$scope.socket = {};
+				$scope.scheduler = {};
 				$scope.mode = 'edit';
 
 				if (driver.label === 'dockermachine - local') {
@@ -517,6 +540,16 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 					}
 				} else if (driver.label === 'docker - socket') {
 					$scope.socket.socketPath = driver.socketPath;
+				} else if (driver.label === 'scheduler - kubernetes') {
+					$scope.driver.info.label = 'scheduler - kubernetes';
+					$scope.scheduler.endpoint = driver.endpoint;
+					$scope.scheduler.username = driver.username;
+					$scope.scheduler.password = driver.password;
+					$scope.scheduler.token = driver.token;
+					$scope.scheduler.namespace = driver.namespace;
+					if (driver.config && driver.config !== "") {
+						$scope.scheduler.config = JSON.stringify(driver.config, null, 2);
+					}
 				}
 
 				$scope.onSubmit = function () {
@@ -601,6 +634,21 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 					socketPath: currentScope.socket.socketPath
 				}
 			};
+		} else if (currentScope.driver.info.label === 'scheduler - kubernetes') {
+			var postData = {
+				scheduler: {
+					kubernetes: {
+						endpoint: currentScope.scheduler.endpoint,
+						username: currentScope.scheduler.username,
+						password: currentScope.scheduler.password,
+						token: currentScope.scheduler.token,
+						namespace: currentScope.scheduler.namespace
+					}
+				}
+			};
+			if (currentScope.scheduler.config && currentScope.scheduler.config !== "") {
+				postData.scheduler.kubernetes.config = JSON.parse(currentScope.scheduler.config);
+			}
 		}
 
 		return postData;

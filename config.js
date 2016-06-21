@@ -777,6 +777,13 @@ module.exports = {
 					"type": "object"
 				}
 			},
+			"scheduler": {
+				"source": ['body.scheduler'],
+				"required": false,
+				"validation": {
+					"type": "object"
+				}
+			},
 			"socket": {
 				"source": ['body.socket'],
 				"required": false,
@@ -814,6 +821,13 @@ module.exports = {
 			},
 			"cloud": {
 				"source": ['body.cloud'],
+				"required": false,
+				"validation": {
+					"type": "object"
+				}
+			},
+			"scheduler": {
+				"source": ['body.scheduler'],
 				"required": false,
 				"validation": {
 					"type": "object"
