@@ -139,8 +139,9 @@ var lib = {
 				name: name,
 				labels: {
 					env: config.envCode,
-					project: config.namespace //TODO, add proper labeling here
-				}
+					project: config.namespace, //TODO, add proper labeling here
+					deployment: params.name.replace(/_/g,'-')
+				},
 			},
 			spec: {
 				ports: servicePorts,
@@ -158,31 +159,51 @@ var lib = {
 
 	},
 
-	"formatService": function (srv, cb) {
+	"formatService": function (srv, params, cb) {
 		// massage the service object so that it conforms to the expected format
 		// of lib/host.js in soajs (hardcoded to docker host model)
 		srv.name = srv.metadata.name; //TODO: pass full service discovery name here ???
 		srv.Id = srv.metadata.name; //TODO: pass full service discovery name here ???
 		srv.NetworkSettings = { IPAddress: srv.spec.clusterIP };
+		srv.DeploymentName = params.name.replace(/_/g,'-');
 		return cb(null, srv);
 	},
 
-	"container": function (dockerInfo, action, cid, mongo, opts, cb) {
-		lib.getDeployer(dockerInfo, mongo, function (error, deployer) {
+	"collection": function (collection, action, cid, deployerConfig, mongo, opts, cb) {
+		console.log("Kubs: executing action: %s on collection: %s with Id: %s", action, collection, cid);
+		lib.getDeployer(deployerConfig, mongo, function (error, deployer) {
 			checkError(error, cb, function () {
-				var container = deployer.getContainer(cid);
-				container[action](opts || null, function (error, response) {
-
+				deployer[collection][action](cid, function (error, obj) {
 					checkError(error, cb, function () {
-						if (action === 'start' || action === 'restart') {
-							container.inspect(cb);
-						}
-						else return cb(null, response);
+						return cb(null, obj);
 					});
 				});
 			});
-		});
-	}
+	})},
+
+	// "collectionAction": function (collection, action, cid, deployerConfig, mongo, opts, cb) {
+    //
+	// 	this.collection("services",  deployerConfig, mongo, function (error, collection) {
+	// 		checkError(error, cb, function () {
+    //
+	// 		});
+	// 	});
+    //
+	// 	lib.getDeployer(deployerConfig, mongo, function (error, deployer) {
+	// 		checkError(error, cb, function () {
+	// 			var container = deployer.getContainer(cid);
+	// 			container[action](opts || null, function (error, response) {
+    //
+	// 				checkError(error, cb, function () {
+	// 					if (action === 'start' || action === 'restart') {
+	// 						container.inspect(cb);
+	// 					}
+	// 					else return cb(null, response);
+	// 				});
+	// 			});
+	// 		});
+	// 	});
+	// }
 };
 var deployer = {
 	"createContainer": function (deployerConfig, params, mongo, cb) {
@@ -194,7 +215,7 @@ var deployer = {
 							checkError(err, cb, function () {
 								deployer.services.create(service, function (err, srv) {
 									checkError(err, cb, function () {
-										lib.formatService(srv, cb);
+										lib.formatService(srv, params, cb);
 									});
 								});
 							});
@@ -223,7 +244,18 @@ var deployer = {
 	},
 
 	"remove": function (deployerConfig, cid, mongo, cb) {
-		lib.container(deployerConfig, "remove", cid, mongo, {"force": true}, cb);
+
+		// get service and read label matching the deployment name.
+		// delete deployment
+		// delete replicasets
+		// delete service
+		lib.collection("services", "get", cid, deployerConfig, mongo, null, function (error, service) {
+			lib.collection("deployments", "delete", service.metadata.labels.deployment, deployerConfig, mongo, null, function (error, dpl){
+				lib.collection("replicasets", "delete", { labelSelector: 'svcname=' + cid }, deployerConfig, mongo, null, function (error, rs){
+					lib.collection("services", "delete", cid, deployerConfig, mongo, null, cb);
+				});
+			});
+		});
 	},
 
 	"info": function (deployerConfig, cid, soajs, res, mongo) {
