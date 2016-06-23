@@ -159,18 +159,17 @@ var lib = {
 
 	},
 
-	"formatService": function (srv, params, cb) {
+	"formatService": function (srv, cb) {
 		// massage the service object so that it conforms to the expected format
 		// of lib/host.js in soajs (hardcoded to docker host model)
 		srv.name = srv.metadata.name; //TODO: pass full service discovery name here ???
 		srv.Id = srv.metadata.name; //TODO: pass full service discovery name here ???
 		srv.NetworkSettings = { IPAddress: srv.spec.clusterIP };
-		srv.DeploymentName = params.name.replace(/_/g,'-');
 		return cb(null, srv);
 	},
 
 	"collection": function (collection, action, cid, deployerConfig, mongo, opts, cb) {
-		console.log("Kubs: executing action: %s on collection: %s with Id: %s", action, collection, cid);
+		console.log("Kubs: executing action: %s on collection: %s with Id: %j", action, collection, cid);
 		lib.getDeployer(deployerConfig, mongo, function (error, deployer) {
 			checkError(error, cb, function () {
 				deployer[collection][action](cid, function (error, obj) {
@@ -215,7 +214,7 @@ var deployer = {
 							checkError(err, cb, function () {
 								deployer.services.create(service, function (err, srv) {
 									checkError(err, cb, function () {
-										lib.formatService(srv, params, cb);
+										lib.formatService(srv, cb);
 									});
 								});
 							});
