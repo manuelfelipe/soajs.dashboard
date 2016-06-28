@@ -21,10 +21,13 @@
 						<select class="form-control" ng-required="true" ng-options="branch as branch.name for branch in currentScope.branches" ng-model="currentScope.branch" ng-change="selectBranch(currentScope.branch)"></select>
 						<br>
 					</div>
-					<div ng-if="currentScope.service.type === 'nginx'">
+					<div ng-if="currentScope.service.type === 'nginx' && !currentScope.schedulerManaged">
 						<label>Exposed Port</label>
 						<input type="number" class="form-control" ng-required="false" ng-model="currentScope.exposedPort" />
 						<br />
+					</div>
+					<div ng-if="currentScope.service.type === 'nginx' && currentScope.schedulerManaged">
+						<label>SSL Enabled</label>&nbsp;&nbsp;<input type="checkbox" ng-required="false" ng-model="currentScope.sslEnabled" /><br />
 					</div>
 					<div ng-if="currentScope.conflict">
 						<label ng-style="{'color': 'red'}">{{translation.warning[LANG]}}</label><br>
@@ -157,7 +160,7 @@
 							<a href="" class="icon" ng-class="{'icon-minus': showNginxHosts, 'icon-plus': !showNginxHosts}" ng-click="showHideContent('nginx')"></a>Nginx
 							{{translation.instances[LANG]}}
 						</legend>
-						<div class="serviceBox controllerEnvelop" ng-if="showNginxHosts">
+						<div class="serviceBox controllerEnvelop" ng-if="showNginxHosts && !schedulerManaged">
 							<div style="width: 100%;" class="head green">
 								<span class="icon icon-smile2"></span>&nbsp;nginx
 							</div>
@@ -201,6 +204,37 @@
 								</div>
 							</div>
 						</div>
+						<div class="serviceBox controllerEnvelop" ng-if="showNginxHosts && schedulerManaged">
+							<div style="width: 100%;" class="head green">
+								<span class="icon icon-smile2"></span>&nbsp;Ingress
+							</div>
+							<div class="service-ips clearfix">
+								<div ng-repeat="nginxHost in nginxHosts" style="float:left; margin:0 1px;">
+									<table border="1" cellpadding="2" cellspacing="1" class="OneIpTable hostsGrid">
+										<thead>
+										<tr>
+											<th class="host-ip">Host</th>
+											<th class="host-ip">Path</th>
+											<th class="host-ip">Backend</th>
+										</tr>
+										</thead>
+										<tbody>
+										<tr ng-repeat="ingressHost in nginxHost.info.spec.rules">
+											<td>
+												<span class="green">{{ingressHost.host}}</span>
+											</td>
+											<td>
+												<span class="green" ng-repeat="path in ingressHost.http.paths">{{path.path}}</span>
+											</td>
+											<td>
+												<span class="green" ng-repeat="path in ingressHost.http.paths">{{path.backend.serviceName}}:{{path.backend.servicePort}}</span>
+											</td>
+										</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
 						<div class="entryBoxes entryBoxesGrid" ng-if="!showNginxHosts">
 							<div class="entryBox blueBox" ng-repeat="nginxHost in nginxHosts" ng-style="{'width': '20%', 'text-align': 'center'}">
 								<div style="width: 100%;" class="head green">
@@ -225,7 +259,7 @@
 										<table width="100%" border="1" cellpadding="2" cellspacing="1" class="hostsGrid" valign="middle">
 											<tbody>
 												<tr>
-													<th class="actions">
+													<th class="actions" colspan="2">
 														{{translation.actions[LANG]}}
 													</th>
 													<td width="60%" valign="top" rowspan="2" class="{{oneIp.color}}">
@@ -256,6 +290,15 @@
 														<a href="" ng-show="oneIp.cid" ng-click="hostLogs(envCode, serviceName, oneIp, serviceInfo)">
 															<span class="icon icon-terminal" title="{{translation.getContainerLogs[LANG]}}"></span>&nbsp;
 														</a>
+													</td>
+													<td valign="top" width="7.0%">
+														<div ng-repeat="operation in oneIp.maintenanceOperations" ng-if="oneIp.maintenanceOperations">
+															<a href="" ng-click="extendedMaintenance(operation, envCode, serviceName, oneIp, serviceInfo)">
+																<!--<span class="icon icon-terminal" title="{{translation.getContainerLogs[LANG]}}"></span>&nbsp;-->
+																<span class="icon" title="{{operation}}">{{operation}}</span>&nbsp;
+															</a>
+														</div>
+														<!--<span class="icon icon-info" title="Get Service Info"></span>&nbsp;-->
 													</td>
 												</tr>
 											</tbody>
@@ -302,7 +345,7 @@
 															<table width="100%" border="1" cellpadding="2" cellspacing="1" class="hostsGrid">
 																<tbody>
 																	<tr>
-																		<th class="actions">
+																		<th class="actions" colspan="2">
 																			{{translation.actions[LANG]}}
 																		</th>
 																		<td valign="top" rowspan="2" class="{{oneIp.color}}">
@@ -340,6 +383,17 @@
 																			<!--<a href="" ng-show="oneIp.healthy && oneIp.cid" ng-click="infoHost(envCode, serviceName, oneIp, serviceInfo)">-->
 																			<!--<span class="icon icon-info" title="Get Service Info"></span>&nbsp;-->
 																			<!--</a>-->
+																		</td>
+																		<td valign="top" width="26%">
+																			Operations: <span>{{oneIp.maintenanceOperations}}</span>&nbsp;
+
+																			<div ng-repeat="operation in oneIp.maintenanceOperations" ng-if="oneIp.maintenanceOperations">
+																				<a href="" ng-click="extendedMaintenance(operation, envCode, hosts[service].name, oneIp, hosts[service])">
+																					<!--<span class="icon icon-terminal" title="{{translation.getContainerLogs[LANG]}}"></span>&nbsp;-->
+																					<span title="{{operation}}">{{operation}}</span>&nbsp;
+																				</a>
+																			</div>
+																			<!--<span class="icon icon-info" title="Get Service Info"></span>&nbsp;-->
 																		</td>
 																		<!--<td valign="top"><span class="{{oneIp.color}}">{{oneIp.hostname}}<br /><b>IP:</b>&nbsp;{{oneIp.ip}}<br /><b>Version:</b>&nbsp;{{version}}</span></td>-->
 

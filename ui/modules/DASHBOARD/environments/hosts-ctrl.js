@@ -97,6 +97,10 @@ environmentsApp.controller('hostsCtrl', ['$scope', '$cookies', '$timeout', 'envH
 		envHosts.hostLogs($scope, env, serviceName, oneHost, serviceInfo);
 	};
 
+	$scope.extendedMaintenance = function (operation, env, serviceName, oneHost, serviceInfo) {
+		envHosts.extendedMaintenance($scope, operation, env, serviceName, oneHost, serviceInfo);
+	};
+
 	$scope.infoHost = function (env, serviceName, oneHost, serviceInfo) {
 		envHosts.infoHost($scope, env, serviceName, oneHost, serviceInfo);
 	};

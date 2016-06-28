@@ -82,6 +82,15 @@ var deployer = {
             if (params.Cmd) {
                 options.Cmd = params.Cmd;
             }
+
+            if (params.customResource) {
+                options.customResource = params.customResource;
+            }
+
+            if (params.replicas) {
+                options.replicas = params.replicas;
+            }
+
             deployer.createContainer(deployerConfig, options, mongo, cb);
         });
     },
@@ -109,6 +118,11 @@ var deployer = {
     "info": function (deployerConfig, cid, req, res, mongo) {
         var deployer = getDeployer(deployerConfig);
         deployer.info(deployerConfig, cid, req, res, mongo);
+    },
+
+    "maintenance": function (operation, deployerConfig, cid, req, res, mongo) {
+        var deployer = getDeployer(deployerConfig);
+        deployer.maintenance(operation, deployerConfig, cid, req, res, mongo);
     }
 };
 module.exports = deployer;

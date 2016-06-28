@@ -1804,7 +1804,14 @@ module.exports = {
 				"source": ['body.operation'],
 				"validation": {
 					"type": "string",
-					"enum": ["heartbeat", "reloadRegistry", "loadProvision", "awarenessStat", 'hostLogs', 'infoHost', 'daemonStats']
+					"enum": ["heartbeat", "reloadRegistry", "loadProvision", "awarenessStat", 'hostLogs', 'infoHost', 'daemonStats', 'extended']
+				}
+			},
+			"extendedOperation": {
+				"source": ['body.extendedOperation'],
+				"required": false,
+				"validation": {
+					"type": "string"
 				}
 			},
 			"serviceName": {
@@ -1929,7 +1936,14 @@ module.exports = {
 				"validation":{
 					"type":"number"
 				}
-			}
+			},
+			"sslEnabled": {
+				"source": ["body.sslEnabled"],
+				"required": false,
+				"validation":{
+					"type":"boolean"
+				}
+			},
 		},
 		"/hosts/updateNginx": {
 			"_apiInfo": {
@@ -2010,6 +2024,13 @@ module.exports = {
 				"required": true,
 				"validation": {
 					"type": "string"
+				}
+			},
+			"replicas": {
+				"source": ['body.replicas'],
+				"required": false,
+				"validation": {
+					"type": "integer"
 				}
 			}
 		},

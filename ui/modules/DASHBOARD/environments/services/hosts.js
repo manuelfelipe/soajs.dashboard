@@ -21,6 +21,7 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
 	                currentScope.profile = response.profile;
 	                currentScope.deployer = response.deployer;
                     currentScope.hostList = response.hosts;
+                    currentScope.schedulerManaged = (currentScope.deployer.selected && currentScope.deployer.selected.split('.')[1] === 'scheduler');
                     if (response.hosts && response.hosts.length > 0) {
                         currentScope.hosts = {
                             'controller': {
@@ -38,6 +39,7 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
 		                            'hostname': response.hosts[j].hostname,
 		                            'ip': response.hosts[j].ip,
 		                            'cid': response.hosts[j].cid,
+                                    'maintenanceOperations': response.hosts[j].maintenanceOperations,
 		                            'version': response.hosts[j].version,
 		                            'color': 'red',
 		                            'port': 4000,
@@ -256,7 +258,11 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
             else {
                 //collect network information to be displayed in UI
                 currentScope.showNginxHosts = true;
+                currentScope.allowNginx = true;
                 response.forEach(function (oneHost) {
+                    if(oneHost.provider === 'scheduler'){
+                        currentScope.allowNginx = false;
+                    }
                     oneHost.networkInfo = {
                         ips: [],
                         ports: []
@@ -780,6 +786,55 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
         });
     }
 
+    function extendedMaintenance(currentScope, operation, env, serviceName, oneHost, serviceInfo) {
+        getSendDataFromServer(currentScope, ngDataApi, {
+            "method": "send",
+            "routeName": "/dashboard/hosts/maintenanceOperation",
+            "data": {
+                "serviceName": oneHost.name,
+                "operation": "extended",
+                "extendedOperation": operation,
+                "serviceHost": oneHost.ip,
+                "servicePort": oneHost.port,
+                "hostname": oneHost.hostname,
+                "env": env
+            }
+        }, function (error, response) {
+            if (error) {
+                serviceInfo.waitMessage.type = 'danger';
+                serviceInfo.waitMessage.message = translation.errorExecutingGetHostLogsOperation[LANG] + " " +
+                    oneHost.name +
+                    " " + translation.errorExecutingGetHostLogsOperation[LANG] + " " +
+                    oneHost.ip +
+                    ":" +
+                    oneHost.port +
+                    " @ " +
+                    new Date().toISOString();
+                currentScope.closeWaitMessage(serviceInfo);
+            }
+            else {
+                $modal.open({
+                    templateUrl: "logBox.html",
+                    size: 'lg',
+                    backdrop: true,
+                    keyboard: false,
+                    windowClass: 'large-Modal',
+                    controller: function ($scope, $modalInstance) {
+                        $scope.title = "Logs for execution of '" + operation + "' for " + oneHost.name + " host";
+                        $scope.data = remove_special(response.data);
+                        fixBackDrop();
+                        setTimeout(function () {
+                            highlightMyCode()
+                        }, 500);
+                        $scope.ok = function () {
+                            $modalInstance.dismiss('ok');
+                        };
+                    }
+                });
+            }
+        });
+    }
+
     function remove_special(str) {
         var rExps = [/[\xC0-\xC2]/g, /[\xE0-\xE2]/g,
             /[\xC8-\xCA]/g, /[\xE8-\xEB]/g,
@@ -883,6 +938,7 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                 };
 
                 $scope.addNginx = function () {
+                    if (!currentScope.allowNginx) return;
                     currentScope.services.unshift({
                         UIGroup: 'Web Servers',
                         name: 'Nginx',
@@ -1107,6 +1163,10 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                             }
                         }
 
+                        if (currentScope.schedulerManaged && currentScope.schedulerManaged === true) {
+                            params.replicas = max;
+                        }
+
                         var config = {
                             "method": "send",
                             "routeName": "/dashboard/hosts/deployService",
@@ -1171,8 +1231,8 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                                     currentScope.executeHeartbeatTest(env, hosttmpl);
                                 }, 2000);
 
-                                counter++;
-                                if (counter === max) {
+                                counter++
+                                if (counter === max || config.params.replicas) { // don't loop if replicas in scheduler
                                     return cb();
                                 }
                                 else {
@@ -1190,6 +1250,10 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
 
                     if (currentScope.exposedPort) {
                         params.exposedPort = currentScope.exposedPort;
+                    }
+
+                    if (currentScope.sslEnabled) {
+                        params.sslEnabled = currentScope.sslEnabled;
                     }
 
                     getSendDataFromServer(currentScope, ngDataApi, {
@@ -1325,6 +1389,7 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
         'removeHost': removeHost,
         'hostLogs': hostLogs,
         'infoHost': infoHost,
+        'extendedMaintenance': extendedMaintenance,
         'createHost': createHost,
         'containerLogs': containerLogs,
         'deleteContainer': deleteContainer,

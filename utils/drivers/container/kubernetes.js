@@ -10,6 +10,8 @@ function checkError(error, cb, fCb) {
 	return fCb();
 }
 
+var maintenanceOperations = ["scaleUp", "scaleDown"];
+
 var lib = {
 	"getDeployer": function (deployerConfig, mongo, cb) {
 		var config = utils.cloneObj(deployerConfig);
@@ -71,6 +73,12 @@ var lib = {
 		var serviceName = params.name.split("_")[0];
 		var envVariables = [];
 		var deploymentPorts = [];
+		var replicas = 1;
+
+		if (params.replicas) {
+			console.log("Replicas set to: %v", params.replicas);
+			replicas = params.replicas;
+		}
 
 		for (var i = 0, len = params.Env.length; i < len; i++) {
 			var current_env = params.Env[i].split('=');
@@ -93,7 +101,7 @@ var lib = {
 				}
 			},
 			spec: {
-			replicas: 1, //TODO: get the number from config instead
+			replicas: replicas,
 				template: {
 					metadata: {
 						labels: {
@@ -109,7 +117,17 @@ var lib = {
 							command: params.Cmd,
 							imagePullPolicy: "Always",
 							env: envVariables,
-							ports: deploymentPorts
+							ports: deploymentPorts,
+							livenessProbe: {
+								exec: { command: ["ls", "/opt/soajs/node_modules/"] },
+								initialDelaySeconds: 15,
+								timeoutSeconds: 1
+							},
+							readinessProbe: {
+								httpGet: { path: "/", port: ports[1].port},
+								initialDelaySeconds: 15,
+								timeoutSeconds: 3
+							}
 						}],
 						terminationGracePeriodSeconds: 10,
 						dnsPolicy: "ClusterFirst"
@@ -159,13 +177,62 @@ var lib = {
 
 	},
 
-	"formatService": function (srv, cb) {
+	"createIngressResource": function (config, params, deployer, mongo, cb) {
+
+		var criteria = { "code": config.envCode.toUpperCase() };
+		console.log("mongo criteria: %j", criteria);
+
+		mongo.findOne("environment", criteria, function (error, environment) {
+				checkError(error, cb, function () {
+
+					//TODO: servicePort hardcode... does this change ?
+					var template = {
+						kind: "Ingress",
+						apiVersion: "extensions/v1beta1",
+						metadata: {
+							name: "soajs-ingress-controller",
+							labels: {
+								env: config.envCode,
+								project: config.namespace //TODO, add proper labeling here
+							}
+						},
+						spec: {
+							//tls: [ { "hosts": [ "soajsk8s-cat-api.ypcloud.io" ], "secretName": "ypcloud-io-cert" } ],
+							rules: [
+								{ host: environment.apiPrefix + "." + environment.domain,
+									http: {
+										paths: [ { "path": "/",  "backend": { "serviceName": "controller", "servicePort": 4000 }}]
+									}
+								}
+							]
+						}
+					};
+
+					console.log("Ingress template: %j", template);
+					deployer.ingresses.create(template, function (err, ing) {
+						checkError(err, cb, function () {
+							return cb(null, ing);
+						});
+					});
+				});
+		});
+	},
+
+	"formatResource": function (res, operations, cb) {
 		// massage the service object so that it conforms to the expected format
 		// of lib/host.js in soajs (hardcoded to docker host model)
-		srv.name = srv.metadata.name; //TODO: pass full service discovery name here ???
-		srv.Id = srv.metadata.name; //TODO: pass full service discovery name here ???
-		srv.NetworkSettings = { IPAddress: srv.spec.clusterIP };
-		return cb(null, srv);
+		res.name = res.metadata.name; //TODO: pass full service discovery name here ???
+		res.Id = res.metadata.name; //TODO: pass full service discovery name here ???
+		res.maintenanceOperations = maintenanceOperations;
+
+		if(res.kind === 'service'){
+			res.NetworkSettings = { IPAddress: res.spec.clusterIP };
+		}else{
+			res.provider = 'scheduler';
+			res.NetworkSettings = { IPAddress: "unknown" };
+		}
+
+		return cb(null, res);
 	},
 
 	"collection": function (collection, action, cid, deployerConfig, mongo, opts, cb) {
@@ -178,58 +245,44 @@ var lib = {
 					});
 				});
 			});
-	})},
-
-	// "collectionAction": function (collection, action, cid, deployerConfig, mongo, opts, cb) {
-    //
-	// 	this.collection("services",  deployerConfig, mongo, function (error, collection) {
-	// 		checkError(error, cb, function () {
-    //
-	// 		});
-	// 	});
-    //
-	// 	lib.getDeployer(deployerConfig, mongo, function (error, deployer) {
-	// 		checkError(error, cb, function () {
-	// 			var container = deployer.getContainer(cid);
-	// 			container[action](opts || null, function (error, response) {
-    //
-	// 				checkError(error, cb, function () {
-	// 					if (action === 'start' || action === 'restart') {
-	// 						container.inspect(cb);
-	// 					}
-	// 					else return cb(null, response);
-	// 				});
-	// 			});
-	// 		});
-	// 	});
-	// }
+	})}
 };
 var deployer = {
+
+
 	"createContainer": function (deployerConfig, params, mongo, cb) {
 		lib.getDeployer(deployerConfig, mongo, function (error, deployer) {
-			lib.getServicePorts(params, mongo, function (error, ports) {
-				lib.getDeploymentTemplate(deployerConfig, params, ports, function (err, deployment) {
-					lib.getServiceTemplate(deployerConfig, params, ports, function (err, service) {
-						deployer.deployments.create(deployment, function (err, rd) {
-							checkError(err, cb, function () {
-								deployer.services.create(service, function (err, srv) {
-									checkError(err, cb, function () {
-										lib.formatService(srv, cb);
+
+			if (params.customResource){
+				lib["create" + params.customResource + "Resource"](deployerConfig, params, deployer, mongo, function (err, rs){
+					checkError(err, cb, function () {
+						lib.formatResource(rs, maintenanceOperations, cb);
+					});
+				});
+			}else{
+				lib.getServicePorts(params, mongo, function (error, ports) {
+					lib.getDeploymentTemplate(deployerConfig, params, ports, function (err, deployment) {
+						lib.getServiceTemplate(deployerConfig, params, ports, function (err, service) {
+							deployer.deployments.create(deployment, function (err, rd) {
+								checkError(err, cb, function () {
+									deployer.services.create(service, function (err, srv) {
+										checkError(err, cb, function () {
+											lib.formatResource(srv, maintenanceOperations, cb);
+										});
 									});
 								});
 							});
 						});
 					});
 				});
-			});
+			}
 		});
 	},
 
 	"start": function (deployerConfig, cid, mongo, cb) {
-		console.log("$$$ getting service %s", cid);
 		lib.getDeployer(deployerConfig, mongo, function (error, deployer) {
 			deployer.services.get(cid, function (err, srv) {
-				lib.formatService(srv, cb);
+				lib.formatResource(srv, maintenanceOperations, cb);
 			});
 		});
 	},
@@ -243,51 +296,93 @@ var deployer = {
 	},
 
 	"remove": function (deployerConfig, cid, mongo, cb) {
-
 		// get service and read label matching the deployment name.
 		// delete deployment
 		// delete replicasets
+		// delete pods
 		// delete service
 		lib.collection("services", "get", cid, deployerConfig, mongo, null, function (error, service) {
 			lib.collection("deployments", "delete", service.metadata.labels.deployment, deployerConfig, mongo, null, function (error, dpl){
 				lib.collection("replicasets", "delete", { labelSelector: 'svcname=' + cid }, deployerConfig, mongo, null, function (error, rs){
-					lib.collection("services", "delete", cid, deployerConfig, mongo, null, cb);
+					lib.collection("pods", "delete", { labelSelector: 'svcname=' + cid }, deployerConfig, mongo, null, function (error, rs){
+						lib.collection("services", "delete", cid, deployerConfig, mongo, null, cb);
+					});
 				});
 			});
 		});
 	},
 
 	"info": function (deployerConfig, cid, soajs, res, mongo) {
-		lib.getDeployer(deployerConfig, mongo, function (error, deployer) {
-			deployer.getContainer(cid).logs({
-					stderr: true,
-					stdout: true,
-					timestamps: false,
-					tail: 200
-				},
-				function (error, stream) {
-					if (error) {
-						soajs.log.error('logStreamContainer error: ', error);
-						return res.json(soajs.buildResponse({"code": 601, "msg": error.message}));
-					}
-					else {
-						var data = '';
-						var chunk;
-						stream.setEncoding('utf8');
-						stream.on('readable', function () {
-							var handle = this;
-							while ((chunk = handle.read()) != null) {
-								data += chunk.toString("utf8");
-							}
-						});
+		// lib.getDeployer(deployerConfig, mongo, function (error, deployer) {
+		// 	deployer.getContainer(cid).logs({
+		// 			stderr: true,
+		// 			stdout: true,
+		// 			timestamps: false,
+		// 			tail: 200
+		// 		},
+		// 		function (error, stream) {
+		// 			if (error) {
+		// 				soajs.log.error('logStreamContainer error: ', error);
+		// 				return res.json(soajs.buildResponse({"code": 601, "msg": error.message}));
+		// 			}
+		// 			else {
+		// 				var data = '';
+		// 				var chunk;
+		// 				stream.setEncoding('utf8');
+		// 				stream.on('readable', function () {
+		// 					var handle = this;
+		// 					while ((chunk = handle.read()) != null) {
+		// 						data += chunk.toString("utf8");
+		// 					}
+		// 				});
+        //
+		// 				stream.on('end', function () {
+		// 					stream.destroy();
+		// 					var out = soajs.buildResponse(null, {'data': data});
+		// 					return res.json(out);
+		// 				});
+		// 			}
+		// 		});
+		// });
+	},
 
-						stream.on('end', function () {
-							stream.destroy();
-							var out = soajs.buildResponse(null, {'data': data});
-							return res.json(out);
-						});
+	"maintenance": function (operation, deployerConfig, cid, soajs, res, mongo) {
+
+		lib.collection("deployments", "get", { labelSelector: 'svcname=' + cid }, deployerConfig, mongo, null, function (error, dpl){
+			lib.getDeployer(deployerConfig, mongo, function (error, deployer) {
+
+				dpl = dpl[0];
+				console.log(JSON.stringify(dpl));
+
+				if (dpl && dpl.items && dpl.items.length > 0){
+					soajs.log.debug("found deployment items in kubernetes namespace. Updating spec");
+					var deployment = dpl.items[0];
+
+					switch (operation) {
+						case "scaleUp":
+							deployment.spec.replicas = deployment.spec.replicas + 1;
+							break;
+
+						case "scaleDown":
+							deployment.spec.replicas = deployment.spec.replicas - 1;
+							break;
+
+						default:
+							break;
 					}
-				});
+
+					deployer.deployments.update(deployment.metadata.name, deployment, function (error, dplUpdated){
+						if (error){
+							soajs.log.error(JSON.stringify(error));
+							return res.json(soajs.buildResponse({"code": 601, "msg": error.message}));
+						}else{
+							soajs.log.debug("Updated spec %j", dplUpdated);
+							var out = soajs.buildResponse(null, {'data': JSON.stringify(dplUpdated, null, 2)});
+							return res.json(out);
+						}
+					});
+				}
+			});
 		});
 	}
 };
