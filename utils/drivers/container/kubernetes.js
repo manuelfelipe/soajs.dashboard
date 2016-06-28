@@ -225,7 +225,7 @@ var lib = {
 		res.Id = res.metadata.name; //TODO: pass full service discovery name here ???
 		res.maintenanceOperations = maintenanceOperations;
 
-		if(res.kind === 'service'){
+		if(res.kind === 'Service'){
 			res.NetworkSettings = { IPAddress: res.spec.clusterIP };
 		}else{
 			res.provider = 'scheduler';

@@ -1232,7 +1232,7 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                                 }, 2000);
 
                                 counter++
-                                if (counter === max || config.params.replicas) { // don't loop if replicas in scheduler
+                                if (counter === max || params.replicas) { // don't loop if replicas in scheduler
                                     return cb();
                                 }
                                 else {

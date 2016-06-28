@@ -30,6 +30,10 @@ var env_template = {
 				"socket": {
 					"socketPath": "/var/run/docker.sock"
 				}
+			},
+			"scheduler" : {
+				"kubernetes" : {
+				}
 			}
 		}
 	},
