@@ -369,7 +369,7 @@ var deployer = {
 
 						case "status":
 							var status = {'available': deployment.status.availableReplicas, 'desired': deployment.status.replicas};
-							var out = soajs.buildResponse(null, {'data': status });
+							var out = soajs.buildResponse(null, {'data': JSON.stringify(status, null, 2) });
 							soajs.log.debug("the status %j", out);
 							return res.json(out);
 
