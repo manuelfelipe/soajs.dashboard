@@ -352,10 +352,10 @@ var deployer = {
 			lib.getDeployer(deployerConfig, mongo, function (error, deployer) {
 
 				dpl = dpl[0];
-				console.log(JSON.stringify(dpl));
+				soajs.log.debug(JSON.stringify(dpl));
 
 				if (dpl && dpl.items && dpl.items.length > 0){
-					soajs.log.debug("found deployment items in kubernetes namespace. Updating spec");
+					soajs.log.debug("found deployment item in kubernetes namespace. Performing '%s' operation", operation);
 					var deployment = dpl.items[0];
 
 					switch (operation) {
@@ -367,10 +367,18 @@ var deployer = {
 							deployment.spec.replicas = deployment.spec.replicas - 1;
 							break;
 
+						case "status":
+							var status = {'available': deployment.status.availableReplicas, 'desired': deployment.status.replicas};
+							var out = soajs.buildResponse(null, {'data': status });
+							soajs.log.debug("the status %j", out);
+							return res.json(out);
+
 						default:
-							break;
+							return res.json(soajs.buildResponse({"code": 601, "msg": error.message}));
 					}
 
+					// for now, assuming that all non-returning operations are updating the deployment object
+					// works for current usage case
 					deployer.deployments.update(deployment.metadata.name, deployment, function (error, dplUpdated){
 						if (error){
 							soajs.log.error(JSON.stringify(error));

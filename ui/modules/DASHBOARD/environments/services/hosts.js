@@ -197,6 +197,9 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
 							                if(origHostRec.grpConfName){
 								                oneHost.grpConfName = origHostRec.grpConfName;
 							                }
+                                            if (origHostRec.maintenanceOperations) {
+                                                oneHost.maintenanceOperations = origHostRec.maintenanceOperations;
+                                            }
 						                }
 					                });
 					                if (oneHost.hostname && oneHost.ip) {
