@@ -143,6 +143,29 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                             propulateServices(list);
                         }
                     });
+
+                    if (defaultControllerHost.maintenanceOperations && defaultControllerHost.maintenanceOperations.indexOf("status") > -1) {
+                        getSendDataFromServer(currentScope, ngDataApi, {
+                            "method": "send",
+                            "routeName": "/dashboard/hosts/maintenanceOperation",
+                            "data": {
+                                "serviceName": "controller",
+                                "serviceHost": defaultControllerHost.ip,
+                                'hostname': defaultControllerHost.hostname,
+                                "servicePort": 4000,
+                                "env": env,
+                                "operation": "extended",
+                                "extendedOperation": "status"
+                            }
+                        }, function (error, statusResponse) {
+                            if (error) {
+                                defaultControllerHost.extendedStatus = {"available": "unknown", "desired": "unknown"};
+                            }
+                            else {
+                                defaultControllerHost.extendedStatus = JSON.parse(statusResponse.data);
+                            }
+                        });
+                    }
                 }
             });
         }
@@ -220,6 +243,11 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
 			                $timeout(function () {
 				                executeHeartbeatTest(currentScope, env, oneHost);
 			                }, 200);
+
+                            $timeout(function () {
+                                executeStatusTest(currentScope, env, oneHost);
+                            }, 200);
+
 		                });
 	                }
                 }
@@ -413,6 +441,36 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
 			    }
 		    }
 	    }
+    }
+
+    function executeStatusTest(currentScope, env, oneHost) {
+
+        if (oneHost.maintenanceOperations && oneHost.maintenanceOperations.indexOf("status") > -1) {
+            getSendDataFromServer(currentScope, ngDataApi, {
+                "method": "send",
+                "routeName": "/dashboard/hosts/maintenanceOperation",
+                "data": {
+                    "serviceName": oneHost.name,
+                    "operation": "extended",
+                    "extendedOperation": "status",
+                    "serviceHost": oneHost.ip,
+                    "servicePort": oneHost.port,
+                    "hostname": oneHost.hostname,
+                    "env": env
+                }
+            }, function (error, statusResponse) {
+                if (error) {
+                    updateServiceExtendedStatus({"available": "unknown", "desired": "unknown"});
+                }
+                else {
+                    updateServiceExtendedStatus(JSON.parse(statusResponse.data));
+                }
+            });
+        }
+
+        function updateServiceExtendedStatus(data) {
+            currentScope.hosts[oneHost.name].extendedStatus = data;
+        }
     }
 
     function updateServicesControllers(currentScope, env, currentCtrl) {

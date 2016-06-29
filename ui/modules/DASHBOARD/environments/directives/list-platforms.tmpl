@@ -52,6 +52,9 @@
                     <div class="body" ng-if="driver.uiType === 'socket'">
                         <label>{{translation.socketPath[LANG]}}:&nbsp;</label>{{driver.socketPath}}<br>
                     </div>
+                    <div class="body" ng-if="driver.uiType === 'scheduler'">
+                        &nbsp;
+                    </div>
                 </div>
             </fieldset>
             <!-- <fieldset>

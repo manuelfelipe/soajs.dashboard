@@ -10,7 +10,7 @@ function checkError(error, cb, fCb) {
 	return fCb();
 }
 
-var maintenanceOperations = ["scaleUp", "scaleDown"];
+var maintenanceOperations = ["scaleUp", "scaleDown", "status"];
 
 var lib = {
 	"getDeployer": function (deployerConfig, mongo, cb) {
