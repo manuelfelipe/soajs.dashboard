@@ -259,7 +259,7 @@
 										<table width="100%" border="1" cellpadding="2" cellspacing="1" class="hostsGrid" valign="middle">
 											<tbody>
 												<tr>
-													<th class="actions" colspan="2">
+													<th class="actions"  ng-attr-colspan="{{oneIp.maintenanceOperations && '2' || undefined }}">
 														{{translation.actions[LANG]}}
 													</th>
 													<td width="60%" valign="top" rowspan="2" class="{{oneIp.color}}">
@@ -295,7 +295,7 @@
 															<span class="icon icon-terminal" title="{{translation.getContainerLogs[LANG]}}"></span>&nbsp;
 														</a>
 													</td>
-													<td valign="top" width="7.0%">
+													<td valign="top" width="7.0%" ng-if="oneIp.maintenanceOperations">
 														<div ng-repeat="operation in oneIp.maintenanceOperations" ng-if="oneIp.maintenanceOperations">
 															<a href="" ng-click="extendedMaintenance(operation, envCode, serviceName, oneIp, serviceInfo)">
 																<!--<span class="icon icon-terminal" title="{{translation.getContainerLogs[LANG]}}"></span>&nbsp;-->
@@ -352,7 +352,7 @@
 															<table width="100%" border="1" cellpadding="2" cellspacing="1" class="hostsGrid">
 																<tbody>
 																	<tr>
-																		<th class="actions" colspan="2">
+																		<th class="actions"  ng-attr-colspan="{{oneIp.maintenanceOperations && '2' || undefined }}">
 																			{{translation.actions[LANG]}}
 																		</th>
 																		<td valign="top" rowspan="2" class="{{oneIp.color}}">
@@ -391,7 +391,7 @@
 																			<!--<span class="icon icon-info" title="Get Service Info"></span>&nbsp;-->
 																			<!--</a>-->
 																		</td>
-																		<td valign="top" width="26%">
+																		<td valign="top" width="26%" ng-if="oneIp.maintenanceOperations">
 																			<div ng-repeat="operation in oneIp.maintenanceOperations" ng-if="oneIp.maintenanceOperations">
 																				<a href="" ng-click="extendedMaintenance(operation, envCode, hosts[service].name, oneIp, hosts[service])">
 																					<!--<span class="icon icon-terminal" title="{{translation.getContainerLogs[LANG]}}"></span>&nbsp;-->
