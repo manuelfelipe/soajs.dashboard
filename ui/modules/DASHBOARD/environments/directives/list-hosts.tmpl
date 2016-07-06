@@ -65,6 +65,10 @@
 						<br>
 					</div>
 					<div ng-if="currentScope.service.type !== 'nginx'">
+						<label><input type="checkbox" ng-model="currentScope.useLocalSOAJS" ng-value-true="true" ng-value-false="false" /> Accelerate deployment by using the SOAJS package within the image</label>
+						<br><br>
+					</div>
+					<div ng-if="currentScope.service.type !== 'nginx'">
 						<label>{{translation.envVariables[LANG]}}</label>
 						<textarea class="form-control" rows="5" ng-model="currentScope.envVariables" ng-required="false"></textarea>
 						<br>
@@ -80,27 +84,6 @@
 	<div class="modal-footer">
 		<button class="btn btn-primary" ng-click="onSubmit()">{{translation.submit[LANG]}}</button>
 		<button class="btn btn-danger" ng-click="closeModal()">{{translation.cancel[LANG]}}</button>
-	</div>
-</script>
-
-<script type="text/ng-template" id="serviceInfoBox.html">
-	<div class="modal-header">
-		<table width="100%">
-			<tr>
-				<td width="78%">
-					<h3 class="modal-title">{{title}}</h3>
-				</td>
-				<td width="22%" align="center">
-					<span><text-size-slider min="10" max="36" unit="px" value="12" idt="reg"></text-size-slider></span>
-				</td>
-			</tr>
-		</table>
-	</div>
-	<div class="modal-body">
-		<pre id="reg" class="preBox" scroll-glue><code class="javascript">{{data}}</code></pre>
-	</div>
-	<div class="modal-footer">
-		<button class="btn btn-primary" ng-click="ok()">{{translation.ok[LANG]}}</button>
 	</div>
 </script>
 
@@ -376,7 +359,7 @@
 																				<span class="icon icon-download3"></span>&nbsp;
 																			</a>
 
-																			<a href="" ng-show="oneIp.healthy && serviceInfo.type === 'daemon'" ng-click="loadDaemonStats(envCode, oneIp)" title="{{translation.loadDaemonStatisticsOperation[LANG]}}">
+																			<a href="" ng-show="oneIp.healthy && hosts[service].type === 'daemon'" ng-click="loadDaemonStats(envCode, oneIp)" title="{{translation.loadDaemonStatisticsOperation[LANG]}}">
 																				<span class="icon icon-stats-dots"></span>&nbsp;
 																			</a>
 

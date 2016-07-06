@@ -108,9 +108,17 @@ module.exports = {
 				"validation": {
 					"type": "object",
 					"properties": {
+						"clusterType": {"type": "string"},
 						"URLParam": {"type": "object", "properties": {}},
 						"servers": {"type": "array", "items": {"type": "object", "required": true}},
-						"extraParam": {"type": "object", "properties": {}}
+						"extraParam": {"type": "object", "properties": {}},
+						"credentials": {
+							"type": "object",
+							"properties": {
+								"username": {"type": "string"},
+								"password": {"type": "string"}
+							}
+						}
 					}
 				}
 			},
@@ -516,6 +524,13 @@ module.exports = {
 				"default": "site",
 				"validation": {
 					"type": "string"
+				}
+			},
+			"custom": {
+				"source": ['body.custom'],
+				"required": false,
+				"validation": {
+					"type": "object"
 				}
 			}
 		},
@@ -1043,7 +1058,7 @@ module.exports = {
 				"validation": {
 					"type": "string",
 					"format": "alphanumeric",
-					"maxLength": 5
+					"maxLength": 6
 				}
 			}
 		},
@@ -1756,6 +1771,45 @@ module.exports = {
 				}
 			}
 		},
+		"/hosts/nginx/redeploy": {
+			_apiInfo: {
+				'l': 'Redeploy Nginx Hosts',
+				'group': 'Hosts'
+			},
+			'envCode': {
+				'source': ['query.envCode'],
+				'required': true,
+				'validation': {
+					'type': 'string'
+				}
+			},
+			"ssl":{
+				'source': ['body.ssl'],
+				'required': true,
+				'validation': {
+					'type': 'boolean'
+				}
+			},
+			"nginxConfig": {
+				"source": ["body.nginxConfig"],
+				"required": false,
+				"validation": {
+					"type": "object",
+					"properties": {
+						"customUIId": {"type": "string", "required": true},
+						"branch": {"type": "string", "required": true},
+						"commit": {"type": "string", "required": true}
+					}
+				}
+			},
+			"cid": {
+				"source": ['query.cid'],
+				"required": true,
+				"validation": {
+					"type": "string"
+				}
+			}
+		},
 		"/hosts/delete": {
 			_apiInfo: {
 				"l": "Delete Hosts",
@@ -1910,6 +1964,13 @@ module.exports = {
 				"validation": {
 					"type": "string"
 				}
+			},
+			"useLocalSOAJS": {
+				"source": ['body.useLocalSOAJS'],
+				"required": false,
+				"validation": {
+					"type": "boolean"
+				}
 			}
 		},
 		"/hosts/deployNginx": {
@@ -1937,13 +1998,13 @@ module.exports = {
 					"type":"number"
 				}
 			},
-			"sslEnabled": {
-				"source": ["body.sslEnabled"],
+			"supportSSL": {
+				"source": ['body.supportSSL'],
 				"required": false,
-				"validation":{
-					"type":"boolean"
+				"validation": {
+					"type": "boolean"
 				}
-			},
+			}
 		},
 		"/hosts/updateNginx": {
 			"_apiInfo": {
@@ -2032,6 +2093,13 @@ module.exports = {
 				"validation": {
 					"type": "integer"
 				}
+			},
+			"useLocalSOAJS": {
+				"source": ['body.useLocalSOAJS'],
+				"required": false,
+				"validation": {
+					"type": "boolean"
+				}
 			}
 		},
 		"/hosts/deployDaemon": {
@@ -2053,21 +2121,6 @@ module.exports = {
 				"default": 1,
 				"validation": {
 					"type": "number",
-					"minimum": 1
-				}
-			},
-			"gcName": {
-				"required": false,
-				"source": ['body.gcName'],
-				"validation": {
-					"type": "string"
-				}
-			},
-			"gcVersion": {
-				"required": false,
-				"source": ['body.gcVersion'],
-				"validation": {
-					"type": "integer",
 					"minimum": 1
 				}
 			},
@@ -2113,6 +2166,13 @@ module.exports = {
 				"required": true,
 				"validation": {
 					"type": "string"
+				}
+			},
+			"useLocalSOAJS": {
+				"source": ['body.useLocalSOAJS'],
+				"required": false,
+				"validation": {
+					"type": "boolean"
 				}
 			}
 		},

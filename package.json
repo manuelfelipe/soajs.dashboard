@@ -47,9 +47,9 @@
     "object-hash": "*",
     "request": "*",
     "rimraf": "*",
-    "soajs": "0.3.*",
     "shortid": "^2.2.4",
     "unzip2": "*",
-    "node-kubernetes-client": "git://github.com/manuelfelipe/node-kubernetes-client.git#develop"
+    "node-kubernetes-client": "git://github.com/manuelfelipe/node-kubernetes-client.git#develop",
+    "soajs": "0.3.*"
   }
 }

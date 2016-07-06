@@ -143,7 +143,8 @@ deployService.service('deploySrv', ['ngDataApi', '$timeout', '$modal', function(
 				'owner': formData.owner,
 				'repo': formData.repo,
 				'branch': branchObj.name,
-				'commit': branchObj.commit.sha
+				'commit': branchObj.commit.sha,
+				'useLocalSOAJS': formData.useLocalSOAJS
 			};
 
 			if (formData.exposedPort) {
@@ -177,7 +178,7 @@ deployService.service('deploySrv', ['ngDataApi', '$timeout', '$modal', function(
 					overlay.hide();
 				}
 				else {
-
+					params.supportSSL = formData.supportSSL;
 					getSendDataFromServer(currentScope, ngDataApi, {
 						"method": "send",
 						"routeName": "/dashboard/hosts/deployNginx",

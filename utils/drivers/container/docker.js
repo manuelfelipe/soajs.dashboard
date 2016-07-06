@@ -1,7 +1,10 @@
 "use strict";
+var fs = require("fs");
 var Docker = require('dockerode');
 var utils = require("soajs/lib/utils");
 var Grid = require('gridfs-stream');
+var fs = require('fs');
+var rimraf = require('rimraf');
 
 function checkError(error, cb, fCb) {
 	if (error) {

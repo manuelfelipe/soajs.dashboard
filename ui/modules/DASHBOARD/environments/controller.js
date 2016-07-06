@@ -19,6 +19,24 @@ environmentsApp.controller('environmentCtrl', ['$scope', '$timeout', '$modal', '
 		}
 	};
 
+	$scope.jsonEditor = {
+		custom: {
+			options: {
+				mode: 'tree'
+			},
+			data: {},
+			jsonIsValid: true,
+			dataIsReady: false
+		},
+		logger: {
+			options: {
+				mode: 'tree'
+			},
+			data: {},
+			jsonIsValid: true,
+		}
+	};
+
 	$scope.generateNewMsg = function (env, type, msg) {
 		$scope.grid.rows.forEach(function (oneEnvRecord) {
 			if (oneEnvRecord.code === env) {
@@ -65,13 +83,8 @@ environmentsApp.controller('environmentCtrl', ['$scope', '$timeout', '$modal', '
 							}
 							if (response[x].services && response[x].services.config) {
 								if (response[x].services.config.logger) {
-									$scope.formEnvironment.config_loggerObj = JSON.stringify(response[x].services.config.logger, null, "\t");
-								}
-							}
-
-							if ($scope.formEnvironment.deployer) {
-								for (var driver in $scope.formEnvironment.deployer.container) {
-									$scope.formEnvironment.deployer.container[driver] = JSON.stringify($scope.formEnvironment.deployer.container[driver], null, 2);
+									$scope.formEnvironment.config_loggerObj = response[x].services.config.logger;
+									$scope.jsonEditor.logger.data = $scope.formEnvironment.config_loggerObj;
 								}
 							}
 
@@ -90,20 +103,63 @@ environmentsApp.controller('environmentCtrl', ['$scope', '$timeout', '$modal', '
 							}
 						}
 					}
-
 					$scope.grid = {rows: response};
 					if ($scope.grid.rows) {
 						if ($scope.grid.rows.length == 1) {
 							$scope.grid.rows[0].showOptions = true;
+							$scope.jsonEditor.custom.dataIsReady = true;
 						}
-						// $scope.grid.rows.forEach(function (env) {
-							// env.profileLabel = env.profile.split("/");
-							// env.profileLabel = env.profileLabel[env.profileLabel.length - 1].replace(".js", "");
-						// });
 					}
 				}
 			}
 		});
+	};
+
+	$scope.customLoaded = function (instance) {
+		if (!$scope.grid.rows[0].custom) {
+			$scope.grid.rows[0].custom = {};
+		}
+		$scope.jsonEditor.custom.data = angular.copy ($scope.grid.rows[0].custom);
+
+		$scope.editorLoaded(instance, 'custom');
+	}
+
+	$scope.loggerLoaded = function (instance) {
+		$scope.editorLoaded(instance, 'logger');
+	}
+
+	$scope.editorLoaded = function (instance, source) {
+		//bug in jsoneditor: setting default mode to 'code' does not display data
+		//to fix this, use another mode, load data, wait, switch mode, wait, start listener to validate json object
+		$timeout(function () {
+			$scope.jsonEditor[source].options.mode = 'code';
+
+			$timeout(function () {
+				instance.editor.getSession().on('change', function () {
+					try {
+						instance.get();
+						$scope.jsonEditor[source].jsonIsValid = true;
+					}
+					catch (e) {
+						$scope.jsonEditor[source].jsonIsValid = false;
+					}
+				});
+			}, 600);
+		}, 500);
+	};
+
+	$scope.saveCustomRegistry = function () {
+		if (!$scope.jsonEditor.custom.jsonIsValid) {
+			$scope.displayAlert('danger', 'Custom Registry: Invalid JSON Object');
+			return;
+		}
+
+		$scope.formEnvironment = angular.copy($scope.grid.rows[0]);
+		$scope.formEnvironment.custom = $scope.jsonEditor.custom.data;
+		$scope.newEntry = false;
+		$scope.envId = $scope.formEnvironment._id;
+
+		$scope.save();
 	};
 
 	$scope.getDeploymentMode = function (deployer, value) {
@@ -222,15 +278,12 @@ environmentsApp.controller('environmentCtrl', ['$scope', '$timeout', '$modal', '
 			"topologyDir": "/opt/soajs/"
 		};
 
-		if ($scope.formEnvironment.config_loggerObj && ($scope.formEnvironment.config_loggerObj != "")) {
-			try {
-				$scope.formEnvironment.services.config.logger = JSON.parse($scope.formEnvironment.config_loggerObj);
-				postData.services.config.logger = $scope.formEnvironment.services.config.logger;
-			}
-			catch (e) {
-				$scope.$parent.displayAlert('danger', translation.errorInvalidLoggerJsonObject[LANG]);
+		if ($scope.formEnvironment.config_loggerObj) {
+			if (!$scope.jsonEditor.logger.jsonIsValid) {
+				$scope.displayAlert('danger', 'Logger Config: Invalid JSON Object');
 				return;
 			}
+			postData.services.config.logger = $scope.jsonEditor.logger.data;
 		}
 
 		postData.services.config.session.unset = (postData.services.config.session.unset) ? "destroy" : "keep";
@@ -265,7 +318,7 @@ environmentsApp.controller('environmentCtrl', ['$scope', '$timeout', '$modal', '
 				}
 			}
 		};
-		console.log (postData);
+
 		getSendDataFromServer($scope, ngDataApi, {
 			"method": "send",
 			"routeName": "/dashboard/environment/" + (($scope.newEntry) ? "add" : "update"),
@@ -300,12 +353,40 @@ environmentsApp.controller('environmentCtrl', ['$scope', '$timeout', '$modal', '
 				$scope.waitMessage.message = getCodeMessage(error.code, 'dashboard', error.message);
 			}
 			else {
-				var text = "<p>" + translation.tenantSecurityConfigurationUpdated[LANG] + "<br />" + translation.pleaseCopyBelowKeyValueMarkedRed[LANG] + "<span class='red'>" +
-					response.newKey +
-					"</span> " + translation.andPlace[LANG] + " <b>config.js</b> " + translation.fileOfApplicationWhereItSays[LANG] + " <b>apiConfiguration.key</b>.<br />" + translation.onceYouHaveUpdatedAndSaved[LANG] + " <b>config.js</b>" + translation.clickOnTheButtonBelowDashboardWillOpen[LANG] + "</p><p>" + translation.onceThePageOpensUpNavigate[LANG] + " <b>" + translation.multiTenancy[LANG] + "</b> " + translation.andGenerateExternalKeysTenantsApplications[LANG] + "</p><br/><input type='button' onclick='overlay.hide(function(){location.reload();});' value='Reload Dashboard' class='btn btn-success'/><br /><br />";
+				if (response.newKeys) {
+					$scope.newKeys = [];
+					for (var app in response.newKeys) {
+						response.newKeys[app].newKeys.forEach(function (oneKey) {
+							oneKey.extKeys.forEach(function (oneExtKey) {
+								$scope.newKeys.push({
+									appPackage: response.newKeys[app].package,
+									key: oneKey.key,
+									extKey: oneExtKey.extKey
+								});
+							});
+						});
+					}
 
-				jQuery('#overlay').html("<div class='bg'></div><div class='content'>" + text + "</div>");
-				overlay.show();
+					var currentScope = $scope;
+					var keyUpdateSuccess = $modal.open({
+						templateUrl: 'keyUpdateSuccess.tmpl',
+						size: 'lg',
+						backdrop: true,
+						keyboard: true,
+						controller: function ($scope) {
+							fixBackDrop();
+							$scope.currentScope = currentScope;
+
+							$scope.reloadDashboard = function () {
+								location.reload(true);
+								keyUpdateSuccess.close();
+							};
+						}
+					});
+				}
+				else {
+					$scope.$parent.displayAlert('success', translation.keySecurityHasBeenUpdated[LANG]);
+				}
 			}
 		});
 	};

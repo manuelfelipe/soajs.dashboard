@@ -335,6 +335,11 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 				};
 
 				$scope.uploadFiles = function(type, driverName, counter, modal, cb) {
+					if (!currentScope.envCode || !type || !$scope.formData.certificates[$scope.index[counter]].name) {
+						//to avoid incompatibiltiy issues when using safari browsers
+						return cb();
+					}
+
 					var soajsauthCookie = $cookies.get('soajs_auth');
 					var dashKeyCookie = $cookies.get('soajs_dashboard_key');
 					var progress = {
@@ -457,6 +462,7 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 			keyboard: true,
 			controller: function ($scope, $modalInstance) {
 				fixBackDrop();
+				$scope.jsoneditor = angular.copy(currentScope.jsoneditorConfig);
 
 				$scope.title = translation.addDriver[LANG];
 				$scope.outerScope = currentScope;
@@ -509,6 +515,26 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 			keyboard: true,
 			controller: function ($scope, $modalInstance) {
 				fixBackDrop();
+				$scope.jsoneditor = angular.copy(currentScope.jsoneditorConfig);
+				$scope.jsoneditor.jsonIsValid = true;
+				$scope.jsoneditor.onLoad = function (instance) {
+			        if (instance.mode === 'code') {
+			            instance.setMode('code');
+			        }
+			        else {
+			            instance.set();
+			        }
+
+			        instance.editor.getSession().on('change', function () {
+			            try {
+			                instance.get();
+			                $scope.jsoneditor.jsonIsValid = true;
+			            }
+			            catch (e) {
+			                $scope.jsoneditor.jsonIsValid = false;
+			            }
+			        });
+				};
 
 				$scope.title = "Edit Driver";
 				$scope.outerScope = currentScope;
@@ -527,7 +553,7 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 					$scope.local.host = driver.host;
 					$scope.local.port = driver.port;
 					if (driver.config && driver.config !== "") {
-						$scope.local.config = JSON.stringify(driver.config, null, 2);
+						$scope.local.config = angular.copy (driver.config);
 					}
 				} else if (driver.label.indexOf('dockermachine - cloud') !== -1) {
 					$scope.cloud.selectedCloud = driver.label.split(" - ")[2];
@@ -536,7 +562,7 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 					$scope.cloud.host = driver.host;
 					$scope.cloud.port = driver.port;
 					if (driver.config && driver.config !== "") {
-						$scope.cloud.config = JSON.stringify(driver.config, null, 2);
+						$scope.cloud.config = angular.copy (driver.config);
 					}
 				} else if (driver.label === 'docker - socket') {
 					$scope.socket.socketPath = driver.socketPath;
@@ -553,6 +579,28 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 				}
 
 				$scope.onSubmit = function () {
+					if (driver.label === 'dockermachine - local') {
+						if (!$scope.jsoneditor.jsonIsValid) {
+							$scope.error = {
+								message: 'Invalid JSON Object'
+							};
+							$timeout(function () {
+								$scope.error.message = '';
+							}, 5000);
+							return;
+						}
+					}
+					else if (driver.label.indexOf('dockermachine - cloud') !== -1) {
+						if (!$scope.jsoneditor.jsonIsValid) {
+							$scope.error = {
+								message: 'Invalid JSON Object'
+							};
+							$timeout(function () {
+								$scope.error.message = '';
+							}, 5000);
+							return;
+						}
+					}
 					var postData = preparePostData($scope);
 
 					getSendDataFromServer(currentScope, ngDataApi, {
@@ -614,7 +662,7 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 				}
 			};
 			if (currentScope.local.config && currentScope.local.config !== "") {
-				postData.local.config = JSON.parse(currentScope.local.config);
+				postData.local.config = currentScope.local.config;
 			}
 		} else if (currentScope.driver.info.label === 'dockermachine - cloud') {
 			var postData = {
@@ -625,7 +673,7 @@ platformsServices.service('envPlatforms', ['ngDataApi', '$timeout', '$modal', '$
 				}
 			};
 			if (currentScope.cloud.config && currentScope.cloud.config !== "") {
-				postData.cloud.config = JSON.parse(currentScope.cloud.config);
+				postData.cloud.config = currentScope.cloud.config;
 			}
 
 		} else if (currentScope.driver.info.label === 'docker - socket') {

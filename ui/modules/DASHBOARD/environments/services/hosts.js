@@ -622,23 +622,27 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                     cb();
                 }
                 else {
-                    $modal.open({
-                        templateUrl: "serviceInfoBox.html",
-                        size: 'lg',
-                        backdrop: true,
-                        keyboard: false,
-                        controller: function ($scope, $modalInstance) {
-                            $scope.title = "Reloaded Registry of " + oneHost.name;
-                            $scope.data = JSON.stringify(response, null, 2);
-                            fixBackDrop();
-	                        setTimeout(function () {
-                                highlightMyCode()
-                            }, 500);
-                            $scope.ok = function () {
-                                $modalInstance.dismiss('ok');
-                            };
-                        }
-                    });
+                    var formConfig = angular.copy(environmentsConfig.form.serviceInfo);
+                    formConfig.entries[0].value = response;
+                    var options = {
+            			timeout: $timeout,
+            			form: formConfig,
+            			name: 'reloadRegistry',
+            			label: "Reloaded Registry of " + oneHost.name,
+            			actions: [
+            				{
+            					'type': 'submit',
+            					'label': translation.ok[LANG],
+            					'btn': 'primary',
+            					'action': function (formData) {
+                                    currentScope.modalInstance.dismiss('cancel');
+                                    currentScope.form.formData = {};
+                                }
+            				}
+            			]
+            		};
+
+            		buildFormWithModal(currentScope, $modal, options);
                 }
             }
         });
@@ -668,23 +672,27 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                     new Date().toISOString());
             }
             else {
-                $modal.open({
-                    templateUrl: "serviceInfoBox.html",
-                    size: 'lg',
-	                backdrop: true,
-                    keyboard: false,
-                    controller: function ($scope, $modalInstance) {
-                        $scope.title = "Reloaded Provisioned Information of " + oneHost.name;
-                        $scope.data = JSON.stringify(response, null, 2);
-	                    fixBackDrop();
-	                    setTimeout(function () {
-                            highlightMyCode()
-                        }, 500);
-                        $scope.ok = function () {
-                            $modalInstance.dismiss('ok');
-                        };
-                    }
-                });
+                var formConfig = angular.copy(environmentsConfig.form.serviceInfo);
+                formConfig.entries[0].value = response;
+                var options = {
+        			timeout: $timeout,
+        			form: formConfig,
+        			name: 'reloadProvision',
+        			label: "Reloaded Provisioned Information of " + oneHost.name,
+        			actions: [
+        				{
+        					'type': 'submit',
+        					'label': translation.ok[LANG],
+        					'btn': 'primary',
+        					'action': function (formData) {
+                                currentScope.modalInstance.dismiss('cancel');
+                                currentScope.form.formData = {};
+                            }
+        				}
+        			]
+        		};
+
+        		buildFormWithModal(currentScope, $modal, options);
             }
         });
     }
@@ -713,23 +721,27 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                     new Date().toISOString());
             }
             else {
-                $modal.open({
-                    templateUrl: "serviceInfoBox.html",
-                    size: "lg",
-                    backdrop: true,
-                    keyboard: false,
-                    controller: function ($scope, $modalInstance) {
-                        $scope.title = "Loaded Daemon Statistics for " + oneHost.name;
-                        $scope.data = JSON.stringify(response, null, 2);
-                        fixBackDrop();
-                        setTimeout(function () {
-                            highlightMyCode()
-                        }, 500);
-                        $scope.ok  =function () {
-                            $modalInstance.dismiss("ok");
-                        }
-                    }
-                })
+                var formConfig = angular.copy(environmentsConfig.form.serviceInfo);
+                formConfig.entries[0].value = response;
+                var options = {
+        			timeout: $timeout,
+        			form: formConfig,
+        			name: 'loadDaemonStats',
+        			label: "Loaded Daemon Statistics for " + oneHost.name,
+        			actions: [
+        				{
+        					'type': 'submit',
+        					'label': translation.ok[LANG],
+        					'btn': 'primary',
+        					'action': function (formData) {
+                                currentScope.modalInstance.dismiss('cancel');
+                                currentScope.form.formData = {};
+                            }
+        				}
+        			]
+        		};
+
+        		buildFormWithModal(currentScope, $modal, options);
             }
         });
     }
@@ -949,6 +961,7 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                 currentScope.confirmBranch = '';
                 delete currentScope.number;
                 delete currentScope.exposedPort;
+                delete currentScope.useLocalSOAJS;
                 currentScope.message = {};
                 currentScope.defaultEnvVariables = "<ul><li>SOAJS_SRV_AUTOREGISTERHOST=false</li><li>NODE_ENV=production</li><li>SOAJS_ENV=" + env + "</li><li>SOAJS_PROFILE=" + currentScope.profile + "</li></ul></p>";
 
@@ -1000,11 +1013,13 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
 
                 $scope.addNginx = function () {
                     if (!currentScope.allowNginx) return;
-                    currentScope.services.unshift({
-                        UIGroup: 'Web Servers',
-                        name: 'Nginx',
-                        type: 'nginx'
-                    });
+                    if (env !== 'DASHBOARD') {
+                        currentScope.services.unshift({
+                            UIGroup: 'Web Servers',
+                            name: 'Nginx',
+                            type: 'nginx'
+                        });
+                    }
                 };
 
                 $scope.selectService = function (service) {
@@ -1124,7 +1139,8 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                         'envCode': env,
                         "number": max,
                         "owner": currentScope.serviceOwner,
-                        "repo": currentScope.serviceRepo
+                        "repo": currentScope.serviceRepo,
+                        "useLocalSOAJS": currentScope.useLocalSOAJS
                     };
 
                     if (currentScope.commit && !currentScope.confirmBranch) {
@@ -1194,7 +1210,8 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                         var params = {
                             'envCode': env,
                             'owner': currentScope.serviceOwner,
-                            'repo': currentScope.serviceRepo
+                            'repo': currentScope.serviceRepo,
+                            'useLocalSOAJS': currentScope.useLocalSOAJS
                         };
 
                         if (currentScope.commit && !currentScope.confirmBranch) {
@@ -1242,6 +1259,7 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                         getSendDataFromServer(currentScope, ngDataApi, config, function (error, response) {
                             if (error) {
                                 currentScope.generateNewMsg(env, 'danger', error.message);
+                                $modalInstance.close();
                             }
                             else {
                                 currentScope.generateNewMsg(env, 'success', translation.newServiceHostsAdded[LANG]);
@@ -1314,7 +1332,7 @@ hostsServices.service('envHosts', ['ngDataApi', '$timeout', '$modal', '$compile'
                     }
 
                     if (currentScope.sslEnabled) {
-                        params.sslEnabled = currentScope.sslEnabled;
+                        params.supportSSL = currentScope.sslEnabled;
                     }
 
                     getSendDataFromServer(currentScope, ngDataApi, {
