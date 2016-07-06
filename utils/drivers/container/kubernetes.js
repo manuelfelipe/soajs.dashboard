@@ -41,7 +41,7 @@ var lib = {
 
 	"getServicePorts": function (params, mongo, cb){
 
-		var serviceName = params.name.split("_")[0];
+		var serviceName = params.name.split("-")[0];
 		var ports = [];
 		var criteria = { "name": serviceName };
 		console.log("mongo criteria: %j", criteria);
@@ -70,7 +70,7 @@ var lib = {
 	"getDeploymentTemplate": function (config, params, ports, cb) {
 
 		var name = params.name.replace(/_/g,'-'); //K8S only takes valid DNS subdomain names
-		var serviceName = params.name.split("_")[0];
+		var serviceName = params.name.split("-")[0];
 		var envVariables = [];
 		var deploymentPorts = [];
 		var replicas = 1;
@@ -143,7 +143,7 @@ var lib = {
 
 	"getServiceTemplate": function (config, params, ports, cb) {
 
-		var name = params.name.split("_")[0];
+		var name = params.name.split("-")[0];
 		var servicePorts = [];
 
 		for (var j = 0, len = ports.length; j < len; j++) {
