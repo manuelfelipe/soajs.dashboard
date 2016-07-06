@@ -29,7 +29,7 @@ var deployer = {
                 return cb(err);
             }
 
-            var containerName = name + "_" + uid + "_" + environment;
+            var containerName = name + "-" + uid + "-" + environment;
 
             var env = [
                 "SOAJS_ENV=" + environment
