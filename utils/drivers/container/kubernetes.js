@@ -69,8 +69,8 @@ var lib = {
 
 	"getDeploymentTemplate": function (config, params, ports, cb) {
 
-		var name = params.name.replace(/_/g,'-'); //K8S only takes valid DNS subdomain names
-		var serviceName = params.name.split("-")[0];
+		var name = params.name.replace(/_/g,'-').toLowerCase(); //K8S only takes valid DNS subdomain names
+		var serviceName = params.name.split("-")[0].toLowerCase();
 		var envVariables = [];
 		var deploymentPorts = [];
 		var replicas = 1;
@@ -143,7 +143,7 @@ var lib = {
 
 	"getServiceTemplate": function (config, params, ports, cb) {
 
-		var name = params.name.split("-")[0];
+		var name = params.name.split("-")[0].toLowerCase();
 		var servicePorts = [];
 
 		for (var j = 0, len = ports.length; j < len; j++) {
