@@ -19,8 +19,12 @@ var lib = {
 		config.envCode = config.envCode.toUpperCase();
 
 		var urlEndpoint = url.parse(config.endpoint);
+                var endpoint = urlEndpoint.host + urlEndpoint.path;
+     
+                console.log("connecting to: " + endpoint);
+
 		var k8sConn = {
-			host: urlEndpoint.host,
+			host: endpoint,
 			protocol: urlEndpoint.protocol.slice(0, -1),
 			version: 'v1',
 			namespace: config.namespace
