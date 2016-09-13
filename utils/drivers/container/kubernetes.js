@@ -271,6 +271,8 @@ var deployer = {
 								checkError(err, cb, function () {
 									deployer.services.create(service, function (err, srv) {
 										checkError(err, cb, function () {
+											console.log(err);
+											console.log(srv);
 											lib.formatResource(srv, maintenanceOperations, cb);
 										});
 									});
