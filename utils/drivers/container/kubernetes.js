@@ -37,6 +37,7 @@ var lib = {
 			k8sConn.password = config.password;
 		}
 
+		console.log("connection str:" + JSON.stringify(k8sConn));
 
 		var k8s = new Kubernetes(k8sConn);
 		// TODO: check for errors ? where are the error code numbers defined ?
@@ -57,16 +58,10 @@ var lib = {
 					ports.push({"port": 80,  "name": "http"} );
 					ports.push({"port": 443, "name": "https"} );
 				}else{
-					console.log("mongo found port: %j", soajsService.port);
 					ports.push({"port": soajsService.port, "name": "service"} );
 					ports.push({"port": soajsService.port + 1000, "name": "maintenance"} );
-					console.log("mongo found something: %j", soajsService);
-					console.log("found ports for service");
-					console.log(ports);
 				}
-
 				return cb(null, ports);
-
 			});
 		});
 	},
